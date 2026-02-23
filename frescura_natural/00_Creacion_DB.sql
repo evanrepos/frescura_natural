@@ -1,15 +1,15 @@
 /*
 ------------------------------------------------------------
 Universidad Nacional de La Matanza
-Trabajo Práctico Integrador - Bases de Datos Aplicadas
+Trabajo PrÃ¡ctico Integrador - Bases de Datos Aplicadas
 Integrantes: 
 Apellido y Nombre						
-Gonzáles Fernándes Iván Alejandro		
+GonzÃ¡les FernÃ¡ndes IvÃ¡n Alejandro		
 Juan Bautista Sabaris					
 Mamani Estrada Lucas Gabriel			
 ------------------------------------------------------------
 */
-----CREACIÓN DE LA BASE DE DATOS
+----CREACIÃ“N DE LA BASE DE DATOS
 
 USE master;
 GO
@@ -33,7 +33,7 @@ PRINT 'Base de datos FrescuraNatural creada correctamente';
 GO
 
 ----------------------------------------------------------------
--- CREACIÓN DE ESQUEMAS
+-- CREACIÃ“N DE ESQUEMAS
 ----------------------------------------------------------------
 CREATE SCHEMA productos;     
 GO
@@ -58,7 +58,10 @@ CREATE TABLE sucursales.sucursal (
 
 CREATE TABLE sucursales.capacitador (
     id_capacitador INT IDENTITY(1,1) PRIMARY KEY,
-    nombre VARCHAR(50) NOT NULL
+    numero_registro VARCHAR(31) UNIQUE NOT NULL,
+    nombre VARCHAR(50) NOT NULL,
+    telefono VARCHAR(12),
+    mail VARCHAR(40)
 );
 
 CREATE TABLE sucursales.vendedor (
