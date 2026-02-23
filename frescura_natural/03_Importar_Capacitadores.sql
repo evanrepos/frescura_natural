@@ -34,6 +34,7 @@ BEGIN
 END
 GO
 
-EXEC sucursales.sp_ingresar_capacitadores 'E:\frescura_natural\fuente\03.capacitadores\capacitadores-de-manipuladores-de-alimentos.csv'
+--CAMBIAR <ruta> por el path del archivo.
+EXEC sucursales.sp_ingresar_capacitadores <ruta>
 GO
 SELECT * FROM sucursales.capacitador
