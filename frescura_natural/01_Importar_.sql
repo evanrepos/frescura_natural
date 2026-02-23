@@ -55,4 +55,4 @@ BEGIN
 END;
 GO
 
-EXEC sucursales.sp_ingresar_productos 'E:\frescura_natural\fuente\04.precios_mayoristas\01\RF230126.xlsx', 'RF230126'
+EXEC sucursales.sp_ingresar_productos <ruta>, <nombre-pagina>
