@@ -17,4 +17,4 @@ BEGIN
 END;
 GO
 
-EXEC datos.sp_ingresar_mermas 'E:\frescura_natural\fuente\01.mermas\desperdicios.xlsx', 'desperdicios'
+EXEC datos.sp_ingresar_mermas <ruta>, 'desperdicios'

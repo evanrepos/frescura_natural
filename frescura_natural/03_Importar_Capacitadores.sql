@@ -1,4 +1,3 @@
---PROBAR CSV
 USE FrescuraNatural
 GO
 
@@ -34,7 +33,4 @@ BEGIN
 END
 GO
 
---CAMBIAR <ruta> por el path del archivo.
 EXEC sucursales.sp_ingresar_capacitadores <ruta>
-GO
-SELECT * FROM sucursales.capacitador

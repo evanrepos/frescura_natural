@@ -18,4 +18,4 @@ BEGIN
 END;
 GO
 
-EXEC datos.sp_ingresar_estadisticas 'E:\frescura_natural\fuente\02.estimaciones\estimaciones-agricolas-1969_2025.xlsx', 'Hoja1'
+EXEC datos.sp_ingresar_estadisticas <ruta>, 'Hoja1'

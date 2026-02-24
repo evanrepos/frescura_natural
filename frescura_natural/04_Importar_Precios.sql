@@ -18,4 +18,4 @@ BEGIN
 END;
 GO
 
-EXEC datos.sp_ingresar_precios 'E:\frescura_natural\fuente\04.precios_mayoristas\01\RF020126.xlsx', 'RF020126'
+EXEC datos.sp_ingresar_precios <ruta>, 'RF020126'

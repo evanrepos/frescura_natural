@@ -1,14 +1,7 @@
---GENERAR PROVEEDORES
-
-----------------------------------------------------------------
--- ESQUEMA: auxiliar (precio)
-----------------------------------------------------------------
---SELECT CAST(RAND() * 2 AS INT) --BIT PALANCA
-
 USE FrescuraNatural
 GO
 
-CREATE FUNCTION json_to_function (@json NVARCHAR(MAX), @tag VARCHAR(MAX))
+CREATE OR ALTER FUNCTION json_to_function (@json NVARCHAR(MAX), @tag VARCHAR(MAX))
 RETURNS TABLE
 AS
 RETURN
@@ -18,16 +11,24 @@ RETURN
         value AS nombre
     FROM OPENJSON(@json, '$.' + @tag)
 );
+GO
 
-CREATE OR ALTER PROCEDURE proveedores.sp_generar_proveedores (@path NVARCHAR(MAX))
+CREATE OR ALTER PROCEDURE proveedores.sp_generar_proveedores (@path NVARCHAR(MAX), @max INT)
 AS
     DECLARE @json NVARCHAR(MAX);
-    DECLARE @sql VARCHAR(MAX);
+    DECLARE @sql NVARCHAR(MAX);
+    DECLARE @i INT;
     DECLARE @cantidad INT;
     DECLARE @nombre VARCHAR(MAX);
     DECLARE @apellido VARCHAR(MAX);
+    DECLARE @procedencia VARCHAR(MAX);
 BEGIN
     -- Solo dinámico para leer archivo
+    CREATE TABLE #procedencia
+    (   
+        id INT IDENTITY(1, 1),
+        nombre VARCHAR(MAX)
+    );
     SET @sql = '
         SELECT @json_out = BulkColumn
         FROM OPENROWSET(
@@ -43,28 +44,40 @@ BEGIN
 
 	--2. GENERAR PROVEEDORES
     --Elige nombre de hombre o mujer.
-    IF (SELECT CAST(RAND() * 2 AS INT)) = 1
+    WHILE @i < @max
     BEGIN
-        SET @cantidad = (SELECT COUNT(1) FROM json_to_function(@json, 'femalename'));
-        SET @nombre = (SELECT nombre FROM json_to_function(@json, 'femalename') 
-            WHERE nro = (SELECT CAST((RAND() * @cantidad) + 1 AS INT)));
+        IF (SELECT CAST(RAND() * 2 AS INT)) = 1
+        BEGIN
+            SET @cantidad = (SELECT COUNT(1) FROM json_to_function(@json, 'femalename'));
+            SET @nombre = (SELECT nombre FROM json_to_function(@json, 'femalename') 
+                WHERE nro = (SELECT CAST((RAND() * @cantidad) + 1 AS INT)));
+        END
+        ELSE
+        BEGIN
+            SET @cantidad = (SELECT COUNT(1) FROM json_to_function(@json, 'malename'));
+            SET @nombre = (SELECT nombre FROM json_to_function(@json, 'malename') 
+                WHERE nro = (SELECT CAST((RAND() * @cantidad) + 1 AS INT)));
+        END
+
+        --Elige apellido.
+        SET @cantidad = (SELECT COUNT(1) FROM json_to_function(@json, 'lastname'));
+        SET @apellido = (SELECT nombre FROM json_to_function(@json, 'lastname') 
+            WHERE nro = (SELECT CAST((RAND() * @cantidad) + 1 AS INT)) );
+
+        --Elige procedencia
+        INSERT INTO #procedencia
+            SELECT procedencia FROM datos.precios
+            WHERE procedencia <> ''
+            ORDER BY procedencia ASC
+        SET @cantidad = (SELECT COUNT(1) FROM #procedencia);
+        SET @procedencia = (SELECT procedencia FROM #procedencia 
+            WHERE id = (SELECT CAST((RAND() * @cantidad) + 1 AS INT)) );
+
+        INSERT INTO proveedores.proveedor (nombre, pais) VALUES
+            (@nombre + ' ' + @apellido, @procedencia);
+        SET @i = @i + 1;
     END
-    ELSE
-    BEGIN
-        SET @cantidad = (SELECT COUNT(1) FROM json_to_function(@json, 'malename'));
-        SET @nombre = (SELECT nombre FROM json_to_function(@json, 'malename') 
-            WHERE nro = (SELECT CAST((RAND() * @cantidad) + 1 AS INT)));
-    END
-
-    --Elige apellido.
-    SET @cantidad = (SELECT COUNT(1) FROM json_to_function(@json, 'lastname'));
-    SET @apellido = (SELECT nombre FROM json_to_function(@json, 'lastname') 
-        WHERE nro = (SELECT CAST((RAND() * @cantidad) + 1 AS INT)) );
-
-    --Elige procedencia
-
 END
+GO
 
-EXEC proveedores.sp_generar_proveedores 'E:\frescura_natural\fuente\05.nombres\data.json'
-
-WHILE 
+EXEC proveedores.sp_generar_proveedores <ruta>, 50
