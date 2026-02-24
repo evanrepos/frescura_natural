@@ -6,6 +6,7 @@ CREATE OR ALTER PROCEDURE datos.sp_ingresar_mermas
     @page_name VARCHAR(MAX)
 AS
 BEGIN
+    SET NOCOUNT ON
     DECLARE @openrowset VARCHAR(MAX);
     SET @openrowset = 'INSERT INTO datos.mermas
         SELECT * FROM OPENROWSET(
