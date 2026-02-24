@@ -23,8 +23,12 @@ AS
     DECLARE @apellido VARCHAR(MAX);
     DECLARE @procedencia VARCHAR(MAX);
 BEGIN
+<<<<<<< HEAD
     SET NOCOUNT ON 
     --0. CONFIGURACIÓN PREVIA
+=======
+	SET NOCOUNT ON
+>>>>>>> 448959fd01c2789b35fc50c14c3146f4713e86ae
     CREATE TABLE #procedencia
     (   
         id INT IDENTITY(1, 1),
@@ -84,5 +88,9 @@ BEGIN
 END
 GO
 
+<<<<<<< HEAD
 EXEC proveedores.sp_generar_proveedores 'E:\frescura_natural\fuente\05.nombres\data.json', 200
 GO
+=======
+EXEC proveedores.sp_generar_proveedores <ruta>, 50
+>>>>>>> 448959fd01c2789b35fc50c14c3146f4713e86ae
