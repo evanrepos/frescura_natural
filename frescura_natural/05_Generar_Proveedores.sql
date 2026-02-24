@@ -23,7 +23,7 @@ AS
     DECLARE @apellido VARCHAR(MAX);
     DECLARE @procedencia VARCHAR(MAX);
 BEGIN
-    -- Solo dinámico para leer archivo
+	SET NOCOUNT ON
     CREATE TABLE #procedencia
     (   
         id INT IDENTITY(1, 1),
