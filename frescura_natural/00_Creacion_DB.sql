@@ -35,6 +35,8 @@ GO
 ----------------------------------------------------------------
 -- CREACIÓN DE ESQUEMAS
 ----------------------------------------------------------------
+CREATE SCHEMA datos;
+GO
 CREATE SCHEMA productos;     
 GO
 CREATE SCHEMA proveedores; 
@@ -83,8 +85,7 @@ GO
 CREATE TABLE proveedores.proveedor (
     id_proveedor INT IDENTITY(1,1) PRIMARY KEY,
     nombre VARCHAR(30) NOT NULL,
-    direccion VARCHAR(100),
-    telefono VARCHAR(20)
+    pais VARCHAR(20)
 );
 GO
 
@@ -108,7 +109,8 @@ CREATE TABLE productos.producto (
     id_proveedor INT NOT NULL,
     id_categoria INT NOT NULL,
     id_temporada INT NOT NULL,
-    descripcion VARCHAR(50) NOT NULL,
+    especie VARCHAR(50) NOT NULL,
+    variedad VARCHAR(50),
     precio DECIMAL(8,2) NOT NULL,
 	CONSTRAINT CK_producto_precio CHECK (precio >= 0),
     CONSTRAINT FK_Producto_Proveedor FOREIGN KEY (id_proveedor) 
@@ -219,6 +221,45 @@ CREATE TABLE proveedores.precio (
         REFERENCES proveedores.proveedor (id_proveedor)
 );
 GO
+
+----------------------------------------------------------------
+-- ESQUEMA: datos (mermas, estimaciones, precios)
+----------------------------------------------------------------
+CREATE TABLE datos.mermas (
+    fecha DATETIME,
+    producto VARCHAR(MAX),
+    cantidad SMALLINT,
+    sucursal VARCHAR(MAX)
+);
+
+CREATE TABLE datos.estimaciones (
+    cultivo VARCHAR(MAX), 
+    campaña CHAR(7), 
+    municipio_id CHAR(5), 
+    municipio_nombre VARCHAR(MAX), 
+    superficie_sembrada INT,
+    superficie_cosechada INT,
+    produccion INT,
+    rendimiento INT
+);
+
+CREATE TABLE datos.precios 
+(
+    especie VARCHAR(15),
+    variedad VARCHAR(20),
+    procedencia VARCHAR(15),
+    envase CHAR(2),
+    peso SMALLINT,
+    calidad CHAR(3),
+    tamaño VARCHAR(12),
+    grado CHAR(3),
+    maximo INT,
+    modal INT,
+    minimo INT,
+    mapk DECIMAL(7, 2),
+    mopk DECIMAL(7, 2),
+    mipk DECIMAL(7, 2)
+);
 
 PRINT 'Tablas creadas correctamente';
 GO
