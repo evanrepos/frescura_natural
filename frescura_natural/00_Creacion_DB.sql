@@ -220,5 +220,24 @@ CREATE TABLE proveedores.precio (
 );
 GO
 
+----------------------------------------------------------------
+-- ESQUEMA: sucursales (mermas)
+----------------------------------------------------------------
+
+CREATE TABLE sucursales.merma (
+	id_merma INT IDENTITY(1,1) PRIMARY KEY,
+	fecha DATE NOT NULL,
+	id_producto INT NOT NULL,
+	cantidad INT NOT NULL,
+	id_sucursal INT NOT NULL,
+	CONSTRAINT CK_merma_cantidad CHECK (cantidad > 0),
+	CONSTRAINT FK_merma_producto FOREIGN KEY (id_producto)
+        REFERENCES productos.producto (id_producto),
+    CONSTRAINT FK_merma_sucursal FOREIGN KEY (id_sucursal)
+        REFERENCES sucursales.sucursal (id_sucursal)
+);
+GO
+
 PRINT 'Tablas creadas correctamente';
 GO
+
