@@ -23,7 +23,8 @@ AS
     DECLARE @apellido VARCHAR(MAX);
     DECLARE @procedencia VARCHAR(MAX);
 BEGIN
-    -- Solo dinámico para leer archivo
+    SET NOCOUNT ON 
+    --0. CONFIGURACIÓN PREVIA
     CREATE TABLE #procedencia
     (   
         id INT IDENTITY(1, 1),
@@ -37,6 +38,7 @@ BEGIN
         ) AS j;
     ';
 
+    --1. IMPORTACIÓN DE NOMBRES
     EXEC sp_executesql 
         @sql,
         N'@json_out NVARCHAR(MAX) OUTPUT',
@@ -44,6 +46,7 @@ BEGIN
 
 	--2. GENERAR PROVEEDORES
     --Elige nombre de hombre o mujer.
+    SET @i = 0;
     WHILE @i < @max
     BEGIN
         IF (SELECT CAST(RAND() * 2 AS INT)) = 1
@@ -66,13 +69,14 @@ BEGIN
 
         --Elige procedencia
         INSERT INTO #procedencia
-            SELECT procedencia FROM datos.precios
+            SELECT DISTINCT procedencia FROM datos.precios
             WHERE procedencia <> ''
             ORDER BY procedencia ASC
         SET @cantidad = (SELECT COUNT(1) FROM #procedencia);
-        SET @procedencia = (SELECT procedencia FROM #procedencia 
+        SET @procedencia = (SELECT nombre FROM #procedencia 
             WHERE id = (SELECT CAST((RAND() * @cantidad) + 1 AS INT)) );
 
+    --3. INSERCIÓN DE DATOS.
         INSERT INTO proveedores.proveedor (nombre, pais) VALUES
             (@nombre + ' ' + @apellido, @procedencia);
         SET @i = @i + 1;
@@ -80,4 +84,5 @@ BEGIN
 END
 GO
 
-EXEC proveedores.sp_generar_proveedores <ruta>, 50
+EXEC proveedores.sp_generar_proveedores 'E:\frescura_natural\fuente\05.nombres\data.json', 200
+GO

@@ -53,14 +53,12 @@ GO
 ----------------------------------------------------------------
 CREATE TABLE sucursales.sucursal (
     id_sucursal INT IDENTITY(1,1) PRIMARY KEY,
-    nombre VARCHAR(50) NOT NULL,
-    direccion VARCHAR(100) NOT NULL,
     localidad VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE sucursales.capacitador (
     id_capacitador INT IDENTITY(1,1) PRIMARY KEY,
-    numero_registro VARCHAR(31) UNIQUE NOT NULL,
+    numero_registro VARCHAR(31),
     nombre VARCHAR(50) NOT NULL,
     telefono VARCHAR(12),
     mail VARCHAR(40)
@@ -106,19 +104,14 @@ CREATE TABLE productos.temporada (
 
 CREATE TABLE productos.producto (
     id_producto INT IDENTITY(1,1) PRIMARY KEY,
-    id_proveedor INT NOT NULL,
-    id_categoria INT NOT NULL,
-    id_temporada INT NOT NULL,
     especie VARCHAR(50) NOT NULL,
     variedad VARCHAR(50),
-    precio DECIMAL(8,2) NOT NULL,
-	CONSTRAINT CK_producto_precio CHECK (precio >= 0),
-    CONSTRAINT FK_Producto_Proveedor FOREIGN KEY (id_proveedor) 
-		REFERENCES proveedores.proveedor (id_proveedor),
-    CONSTRAINT FK_producto_categoria FOREIGN KEY (id_categoria) 
-		REFERENCES productos.categoria (id_categoria),
-    CONSTRAINT FK_producto_temporada FOREIGN KEY (id_temporada) 
-		REFERENCES productos.temporada (id_temporada)
+    procedencia VARCHAR(50),
+	envase CHAR(2),
+	calidad CHAR(2),
+	grado CHAR(3),
+	tamaño VARCHAR(12),
+    peso SMALLINT
 );
 GO
 
@@ -245,6 +238,7 @@ CREATE TABLE datos.estimaciones (
 
 CREATE TABLE datos.precios 
 (
+    id INT IDENTITY(1, 1),
     especie VARCHAR(15),
     variedad VARCHAR(20),
     procedencia VARCHAR(15),
@@ -256,9 +250,9 @@ CREATE TABLE datos.precios
     maximo INT,
     modal INT,
     minimo INT,
-    mapk DECIMAL(7, 2),
-    mopk DECIMAL(7, 2),
-    mipk DECIMAL(7, 2)
+    mapk DECIMAL(8, 2),
+    mopk DECIMAL(8, 2),
+    mipk DECIMAL(8, 2)
 );
 
 PRINT 'Tablas creadas correctamente';

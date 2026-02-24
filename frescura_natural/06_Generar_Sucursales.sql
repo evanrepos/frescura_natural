@@ -13,4 +13,3 @@ GO
   --REEMPLAZAR EL CAMPO <ruta> POR EL PATH DEL ARCHIVO.
 EXEC sucursales.sp_ingresar_sucursales
 GO
-SELECT * FROM sucursales.sucursal

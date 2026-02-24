@@ -9,7 +9,7 @@ AS
 BEGIN
     SET NOCOUNT ON 
     CREATE TABLE #capacitadores(
-        numero_registro VARCHAR(31) UNIQUE NOT NULL,
+        numero_registro VARCHAR(31),
         nombre_completo VARCHAR(50),
         telefono VARCHAR(12),
         mail VARCHAR(40)
@@ -33,4 +33,4 @@ BEGIN
 END
 GO
 
-EXEC sucursales.sp_ingresar_capacitadores <ruta>
+EXEC sucursales.sp_ingresar_capacitadores 'E:\frescura_natural\fuente\03.capacitadores\capacitadores-de-manipuladores-de-alimentos.csv'

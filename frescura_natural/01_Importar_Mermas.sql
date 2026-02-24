@@ -6,6 +6,7 @@ CREATE OR ALTER PROCEDURE datos.sp_ingresar_mermas
     @page_name VARCHAR(MAX)
 AS
 BEGIN
+    SET NOCOUNT ON 
     DECLARE @openrowset VARCHAR(MAX);
     SET @openrowset = 'INSERT INTO datos.mermas
         SELECT * FROM OPENROWSET(
@@ -17,4 +18,4 @@ BEGIN
 END;
 GO
 
-EXEC datos.sp_ingresar_mermas <ruta>, 'desperdicios'
+EXEC datos.sp_ingresar_mermas 'E:\frescura_natural\fuente\01.mermas\desperdicios.xlsx', 'desperdicios'

@@ -6,6 +6,7 @@ CREATE OR ALTER PROCEDURE datos.sp_ingresar_estadisticas
     @page_name VARCHAR(MAX)
 AS
 BEGIN
+    SET NOCOUNT ON 
     DECLARE @openrowset VARCHAR(MAX);
     SET @openrowset = 'INSERT INTO datos.estimaciones
         SELECT * FROM OPENROWSET(
@@ -18,4 +19,4 @@ BEGIN
 END;
 GO
 
-EXEC datos.sp_ingresar_estadisticas <ruta>, 'Hoja1'
+EXEC datos.sp_ingresar_estadisticas 'E:\frescura_natural\fuente\02.estimaciones\estimaciones-agricolas-1969_2025.xlsx', 'Hoja1'
