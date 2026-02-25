@@ -23,12 +23,8 @@ AS
     DECLARE @apellido VARCHAR(MAX);
     DECLARE @procedencia VARCHAR(MAX);
 BEGIN
-<<<<<<< HEAD
-    SET NOCOUNT ON 
     --0. CONFIGURACIÓN PREVIA
-=======
 	SET NOCOUNT ON
->>>>>>> 448959fd01c2789b35fc50c14c3146f4713e86ae
     CREATE TABLE #procedencia
     (   
         id INT IDENTITY(1, 1),
@@ -50,7 +46,7 @@ BEGIN
 
 	--2. GENERAR PROVEEDORES
     --Elige nombre de hombre o mujer.
-    SET @i = 0;
+    SET @i = 1;
     WHILE @i < @max
     BEGIN
         IF (SELECT CAST(RAND() * 2 AS INT)) = 1
@@ -74,7 +70,7 @@ BEGIN
         --Elige procedencia
         INSERT INTO #procedencia
             SELECT DISTINCT procedencia FROM datos.precios
-            WHERE procedencia <> ''
+            WHERE procedencia <> 'Mercado Central'
             ORDER BY procedencia ASC
         SET @cantidad = (SELECT COUNT(1) FROM #procedencia);
         SET @procedencia = (SELECT nombre FROM #procedencia 
@@ -85,12 +81,10 @@ BEGIN
             (@nombre + ' ' + @apellido, @procedencia);
         SET @i = @i + 1;
     END
+    INSERT INTO proveedores.proveedor (nombre, pais) VALUES
+        ('Mercado Central', 'Mercado Central');
 END
 GO
 
-<<<<<<< HEAD
-EXEC proveedores.sp_generar_proveedores 'E:\frescura_natural\fuente\05.nombres\data.json', 200
+EXEC proveedores.sp_generar_proveedores 'E:\frescura_natural\fuente\05.nombres\data.json', 1000
 GO
-=======
-EXEC proveedores.sp_generar_proveedores <ruta>, 50
->>>>>>> 448959fd01c2789b35fc50c14c3146f4713e86ae

@@ -52,12 +52,12 @@ GO
 -- ESQUEMA: sucursales (sucursal, capacitador, vendedor)
 ----------------------------------------------------------------
 CREATE TABLE sucursales.sucursal (
-    id_sucursal INT IDENTITY(1,1) PRIMARY KEY,
+    id INT IDENTITY(1,1) PRIMARY KEY,
     localidad VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE sucursales.capacitador (
-    id_capacitador INT IDENTITY(1,1) PRIMARY KEY,
+    id INT IDENTITY(1,1) PRIMARY KEY,
     numero_registro VARCHAR(31),
     nombre VARCHAR(50) NOT NULL,
     telefono VARCHAR(12),
@@ -65,15 +65,15 @@ CREATE TABLE sucursales.capacitador (
 );
 
 CREATE TABLE sucursales.vendedor (
-    id_vendedor INT IDENTITY(1,1) PRIMARY KEY,
+    id INT IDENTITY(1,1) PRIMARY KEY,
     id_capacitador INT NOT NULL,
     id_sucursal INT NOT NULL,
     nombre VARCHAR(50) NOT NULL,
     fecha_capacitacion DATE,
     CONSTRAINT FK_vendedor_capacitador FOREIGN KEY (id_capacitador) 
-		REFERENCES sucursales.capacitador (id_capacitador),
+		REFERENCES sucursales.capacitador (id),
     CONSTRAINT FK_vendedor_sucursal FOREIGN KEY (id_sucursal)
-		REFERENCES sucursales.Sucursal (id_sucursal)
+		REFERENCES sucursales.Sucursal (id)
 );
 GO
 ----------------------------------------------------------------
@@ -81,7 +81,7 @@ GO
 ----------------------------------------------------------------
 
 CREATE TABLE proveedores.proveedor (
-    id_proveedor INT IDENTITY(1,1) PRIMARY KEY,
+    id INT IDENTITY(1,1) PRIMARY KEY,
     nombre VARCHAR(30) NOT NULL,
     pais VARCHAR(20)
 );
@@ -92,18 +92,18 @@ GO
 ----------------------------------------------------------------
 
 CREATE TABLE productos.categoria (
-    id_categoria INT IDENTITY(1,1) PRIMARY KEY,
+    id INT IDENTITY(1,1) PRIMARY KEY,
     descripcion VARCHAR(50) NOT NULL
 );
 
 
 CREATE TABLE productos.temporada (
-    id_temporada INT IDENTITY(1,1) PRIMARY KEY,
+    id INT IDENTITY(1,1) PRIMARY KEY,
     descripcion VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE productos.producto (
-    id_producto INT IDENTITY(1,1) PRIMARY KEY,
+    id INT IDENTITY(1,1) PRIMARY KEY,
     especie VARCHAR(50) NOT NULL,
     variedad VARCHAR(50),
     procedencia VARCHAR(50),
@@ -120,14 +120,14 @@ GO
 ----------------------------------------------------------------
 
 CREATE TABLE proveedores.ingreso (
-    id_ingreso INT IDENTITY(1,1) PRIMARY KEY,
+    id INT IDENTITY(1,1) PRIMARY KEY,
     id_proveedor INT NOT NULL,
     id_sucursal INT NOT NULL,
     fecha_hora DATETIME NOT NULL,--capaz  DEFAULT GETDATE()
     CONSTRAINT FK_ingreso_proveedor FOREIGN KEY (id_proveedor)
-        REFERENCES proveedores.proveedor (id_proveedor),
+        REFERENCES proveedores.proveedor (id),
     CONSTRAINT FK_ingreso_sucursal  FOREIGN KEY (id_sucursal)
-        REFERENCES sucursales.sucursal (id_sucursal)
+        REFERENCES sucursales.sucursal (id)
 );
 
 CREATE TABLE proveedores.lote (
@@ -136,9 +136,9 @@ CREATE TABLE proveedores.lote (
     id_ingreso INT NOT NULL,
     fecha_ingreso DATE NOT NULL,
     CONSTRAINT FK_lote_producto FOREIGN KEY (id_producto)
-        REFERENCES productos.producto (id_producto),
+        REFERENCES productos.producto (id),
     CONSTRAINT FK_lote_ingreso  FOREIGN KEY (id_ingreso)
-        REFERENCES proveedores.ingreso (id_ingreso)
+        REFERENCES proveedores.ingreso (id)
 );
 
 CREATE TABLE proveedores.lineaIngreso (
@@ -156,7 +156,7 @@ GO
 ----------------------------------------------------------------
 
 CREATE TABLE ventas.cliente (
-    id_cliente INT IDENTITY(1,1) PRIMARY KEY,
+    id INT IDENTITY(1,1) PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL,
     direccion VARCHAR(100) NOT NULL,
     cuit_cuil CHAR(11) NULL,
@@ -165,36 +165,36 @@ CREATE TABLE ventas.cliente (
 );
 
 CREATE TABLE ventas.pedido (--revisar
-    id_pedido INT IDENTITY(1,1) PRIMARY KEY,
+    id INT IDENTITY(1,1) PRIMARY KEY,
     id_cliente INT NOT NULL,
     fecha DATE NOT NULL,
     CONSTRAINT FK_pedido_cliente FOREIGN KEY (id_cliente)--esta bien?
-        REFERENCES ventas.cliente (id_cliente)
+        REFERENCES ventas.cliente (id)
 );
 
 CREATE TABLE ventas.venta (--falta agregar la fk de pedido??
-    id_venta INT IDENTITY(1,1) PRIMARY KEY,
+    id INT IDENTITY(1,1) PRIMARY KEY,
     id_cliente INT NOT NULL,
     id_vendedor INT NOT NULL,
     fecha_hora DATETIME NOT NULL,
     total DECIMAL(9,2) NOT NULL,
     CONSTRAINT CK_venta_total CHECK (total > 0),
     CONSTRAINT FK_venta_cliente FOREIGN KEY (id_cliente)
-        REFERENCES ventas.cliente (id_cliente),
+        REFERENCES ventas.cliente (id),
     CONSTRAINT FK_venta_vendedor FOREIGN KEY (id_vendedor)
-        REFERENCES sucursales.vendedor (id_vendedor)
+        REFERENCES sucursales.vendedor (id)
 );
 
 CREATE TABLE ventas.lineaVenta (
-    id_lineaVenta INT IDENTITY(1,1) PRIMARY KEY,
+    id INT IDENTITY(1,1) PRIMARY KEY,
     id_venta INT NOT NULL,
     id_producto INT NOT NULL,
     cantidad SMALLINT NOT NULL,
     CONSTRAINT CK_lineaVenta_cantidad CHECK (cantidad > 0),
     CONSTRAINT FK_lineaVenta_venta FOREIGN KEY (id_venta)
-        REFERENCES ventas.venta (id_venta),
+        REFERENCES ventas.venta (id),
     CONSTRAINT FK_lineaVenta_producto FOREIGN KEY (id_producto)
-        REFERENCES productos.producto (id_producto)
+        REFERENCES productos.producto (id)
 );
 GO
 
@@ -203,15 +203,16 @@ GO
 ----------------------------------------------------------------
 
 CREATE TABLE proveedores.precio (
-    id_precio INT IDENTITY(1,1) PRIMARY KEY,
+    id INT IDENTITY(1,1) PRIMARY KEY,
     id_producto INT NOT NULL,
     id_proveedor INT NOT NULL,
     monto DECIMAL(8,2) NOT NULL,
     CONSTRAINT CK_precio_monto CHECK (monto > 0),
     CONSTRAINT FK_precio_producto FOREIGN KEY (id_producto)
-        REFERENCES productos.producto (id_producto),
+        REFERENCES productos.producto (id),
     CONSTRAINT FK_precio_proveedor FOREIGN KEY (id_proveedor)
-        REFERENCES proveedores.proveedor (id_proveedor)
+        REFERENCES proveedores.proveedor (id),
+    CONSTRAINT UQ_producto_proveedor UNIQUE (id_producto, id_proveedor)
 );
 GO
 
@@ -220,20 +221,22 @@ GO
 ----------------------------------------------------------------
 CREATE TABLE datos.mermas (
     fecha DATETIME,
-    producto VARCHAR(MAX),
+    producto VARCHAR(30),
     cantidad SMALLINT,
-    sucursal VARCHAR(MAX)
+    sucursal VARCHAR(30),
+    CONSTRAINT UQ_datos_mermas UNIQUE (fecha, producto, cantidad, sucursal)
 );
 
 CREATE TABLE datos.estimaciones (
-    cultivo VARCHAR(MAX), 
+    cultivo VARCHAR(30), 
     campaña CHAR(7), 
     municipio_id CHAR(5), 
-    municipio_nombre VARCHAR(MAX), 
+    municipio_nombre VARCHAR(50), 
     superficie_sembrada INT,
     superficie_cosechada INT,
     produccion INT,
-    rendimiento INT
+    rendimiento INT,
+    CONSTRAINT UQ_datos_estimaciones UNIQUE (cultivo, campaña, municipio_id)
 );
 
 CREATE TABLE datos.precios 
@@ -252,7 +255,8 @@ CREATE TABLE datos.precios
     minimo INT,
     mapk DECIMAL(8, 2),
     mopk DECIMAL(8, 2),
-    mipk DECIMAL(8, 2)
+    mipk DECIMAL(8, 2),
+    CONSTRAINT UQ_datos_precios UNIQUE (especie, variedad, procedencia, envase, peso, calidad, tamaño, grado)
 );
 
 PRINT 'Tablas creadas correctamente';
