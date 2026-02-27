@@ -4,8 +4,7 @@ Universidad Nacional de La Matanza
 Trabajo Práctico Integrador - Bases de Datos Aplicadas
 Integrantes: 
 Apellido y Nombre						
-Gonzáles Fernándes Iván Alejandro		
-Juan Bautista Sabaris					
+Gonzáles Fernándes Iván Alejandro						
 Mamani Estrada Lucas Gabriel			
 ------------------------------------------------------------
 */
@@ -53,7 +52,8 @@ GO
 ----------------------------------------------------------------
 CREATE TABLE sucursales.sucursal (
     id INT IDENTITY(1,1) PRIMARY KEY,
-    localidad VARCHAR(100) NOT NULL
+    localidad VARCHAR(100) NOT NULL,
+	CONSTRAINT UQ_sucursal_localidad UNIQUE (localidad)
 );
 
 CREATE TABLE sucursales.capacitador (
