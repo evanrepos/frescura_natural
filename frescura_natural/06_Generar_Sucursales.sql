@@ -10,7 +10,7 @@ Mamani Estrada Lucas Gabriel
 */
 ----IMPORTACIÓN DE SUCURSALES
 
---TODO: cambiar nombre del archivo a 01 por ejemplo para ejecion en orden
+--TODO: cambiar nombre del archivo a por ejemplo 01_Importar_Sucursales para ejecion en orden
 USE FrescuraNatural
 GO
 
@@ -61,5 +61,10 @@ GO
 EXEC sucursales.sp_ingresar_sucursales 'C:\fuente\mermas\desperdicios.xlsx', 'desperdicios'
 GO
 
-SELECT COUNT(*) FROM sucursales.sucursal; --deben salir 20 columnas
-SELECT * FROM sucursales.sucursal
+--- CONSULTAS PARA PONER EN EL TESTING 
+--SELECT COUNT(*) FROM sucursales.sucursal; --deben salir 20 sucursales
+--SELECT * FROM sucursales.sucursal
+
+--si lo ejecuto devuelta deben seguir saliendo 20 sucursales
+--EXEC sucursales.sp_ingresar_sucursales 'C:\fuente\mermas\desperdicios.xlsx', 'desperdicios'
+--SELECT COUNT(*) FROM sucursales.sucursal;
