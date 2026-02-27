@@ -25,23 +25,53 @@
           <AssociatedConnUserName />
           <FullPath>00_Creacion_DB.sql</FullPath>
         </FileNode>
-        <FileNode Name="01_Importar_.sql">
+        <FileNode Name="01_Importar_Mermas.sql">
           <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:DESKTOP-OEUG4KG:True</AssociatedConnectionMoniker>
           <AssociatedConnSrvName>DESKTOP-OEUG4KG</AssociatedConnSrvName>
           <AssociatedConnUserName />
-          <FullPath>01_Importar_.sql</FullPath>
+          <FullPath>01_Importar_Mermas.sql</FullPath>
         </FileNode>
-        <FileNode Name="02_Importar_Sucursales.sql">
+        <FileNode Name="02_Importar_Estimaciones.sql">
           <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:DESKTOP-OEUG4KG:True</AssociatedConnectionMoniker>
           <AssociatedConnSrvName>DESKTOP-OEUG4KG</AssociatedConnSrvName>
           <AssociatedConnUserName />
-          <FullPath>02_Importar_Sucursales.sql</FullPath>
+          <FullPath>02_Importar_Estimaciones.sql</FullPath>
         </FileNode>
         <FileNode Name="03_Importar_Capacitadores.sql">
           <AssociatedConnectionMoniker />
           <AssociatedConnSrvName />
           <AssociatedConnUserName />
           <FullPath>03_Importar_Capacitadores.sql</FullPath>
+        </FileNode>
+        <FileNode Name="04_Importar_Precios.sql">
+          <AssociatedConnectionMoniker />
+          <AssociatedConnSrvName />
+          <AssociatedConnUserName />
+          <FullPath>04_Importar_Precios.sql</FullPath>
+        </FileNode>
+        <FileNode Name="05_Generar_Proveedores.sql">
+          <AssociatedConnectionMoniker />
+          <AssociatedConnSrvName />
+          <AssociatedConnUserName />
+          <FullPath>05_Generar_Proveedores.sql</FullPath>
+        </FileNode>
+        <FileNode Name="06_Generar_Sucursales.sql">
+          <AssociatedConnectionMoniker />
+          <AssociatedConnSrvName />
+          <AssociatedConnUserName />
+          <FullPath>06_Generar_Sucursales.sql</FullPath>
+        </FileNode>
+        <FileNode Name="07_Generar_Productos.sql">
+          <AssociatedConnectionMoniker />
+          <AssociatedConnSrvName />
+          <AssociatedConnUserName />
+          <FullPath>07_Generar_Productos.sql</FullPath>
+        </FileNode>
+        <FileNode Name="08_Generar_Precios.sql">
+          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:DESKTOP-OEUG4KG:True</AssociatedConnectionMoniker>
+          <AssociatedConnSrvName>DESKTOP-OEUG4KG</AssociatedConnSrvName>
+          <AssociatedConnUserName />
+          <FullPath>08_Generar_Precios.sql</FullPath>
         </FileNode>
       </Items>
     </LogicalFolder>
