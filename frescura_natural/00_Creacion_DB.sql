@@ -83,7 +83,8 @@ GO
 CREATE TABLE proveedores.proveedor (
     id INT IDENTITY(1,1) PRIMARY KEY,
     nombre VARCHAR(30) NOT NULL,
-    pais VARCHAR(20)
+    pais VARCHAR(20),
+    CONSTRAINT UQ_proveedor UNIQUE (nombre, pais)
 );
 GO
 
@@ -99,7 +100,9 @@ CREATE TABLE productos.categoria (
 
 CREATE TABLE productos.temporada (
     id INT IDENTITY(1,1) PRIMARY KEY,
-    descripcion VARCHAR(50) NOT NULL
+    descripcion VARCHAR(50) NOT NULL,
+    mes_desde TINYINT,
+    dia_desde TINYINT,
 );
 
 CREATE TABLE productos.producto (
@@ -111,7 +114,8 @@ CREATE TABLE productos.producto (
 	calidad CHAR(2),
 	grado CHAR(3),
 	tamaño VARCHAR(12),
-    peso SMALLINT
+    peso SMALLINT,
+    CONSTRAINT UQ_producto UNIQUE (especie, variedad, procedencia, envase, peso, calidad, tamaño, grado)
 );
 GO
 
@@ -206,7 +210,9 @@ CREATE TABLE proveedores.precio (
     id INT IDENTITY(1,1) PRIMARY KEY,
     id_producto INT NOT NULL,
     id_proveedor INT NOT NULL,
-    monto DECIMAL(8,2) NOT NULL,
+    monto INT NOT NULL,
+    mpk DECIMAL(7, 2) NOT NULL,
+    fecha AS CAST(SYSDATETIME() AS DATE),
     CONSTRAINT CK_precio_monto CHECK (monto > 0),
     CONSTRAINT FK_precio_producto FOREIGN KEY (id_producto)
         REFERENCES productos.producto (id),
@@ -242,9 +248,9 @@ CREATE TABLE datos.estimaciones (
 CREATE TABLE datos.precios 
 (
     id INT IDENTITY(1, 1),
-    especie VARCHAR(15),
-    variedad VARCHAR(20),
-    procedencia VARCHAR(15),
+    especie VARCHAR(30),
+    variedad VARCHAR(30),
+    procedencia VARCHAR(30),
     envase CHAR(2),
     peso SMALLINT,
     calidad CHAR(3),
@@ -253,10 +259,13 @@ CREATE TABLE datos.precios
     maximo INT,
     modal INT,
     minimo INT,
-    mapk DECIMAL(8, 2),
-    mopk DECIMAL(8, 2),
-    mipk DECIMAL(8, 2),
-    CONSTRAINT UQ_datos_precios UNIQUE (especie, variedad, procedencia, envase, peso, calidad, tamaño, grado)
+    mapk DECIMAL(7, 2),
+    mopk DECIMAL(7, 2),
+    mipk DECIMAL(7, 2),
+    CONSTRAINT UQ_datos_precios 
+        UNIQUE (especie, variedad, procedencia, envase, peso, calidad, tamaño, grado),
+    CONSTRAINT CK_precios 
+        CHECK (maximo >= 0 AND modal >= 0 AND minimo >= 0 AND mapk >= 0 AND mopk >= 0 AND mipk >= 0)
 );
 
 PRINT 'Tablas creadas correctamente';

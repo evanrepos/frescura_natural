@@ -1,12 +1,17 @@
 USE FrescuraNatural
 GO
 
+SELECT TOP 20 * FROM datos.estimaciones
+GO
+
 CREATE OR ALTER PROCEDURE datos.sp_ingresar_estadisticas
     @path VARCHAR(MAX),
     @page_name VARCHAR(MAX)
 AS
 BEGIN
     SET NOCOUNT ON 
+
+    DELETE FROM datos.estimaciones
 
     DECLARE @openrowset VARCHAR(MAX);
     SET @openrowset = 'INSERT INTO datos.estimaciones
@@ -21,4 +26,5 @@ END;
 GO
 
 EXEC datos.sp_ingresar_estadisticas 'E:\frescura_natural\fuente\02.estimaciones\estimaciones-agricolas-1969_2025.xlsx', 'Hoja1'
+SELECT TOP 20 * FROM datos.estimaciones
 

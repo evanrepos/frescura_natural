@@ -1,49 +1,82 @@
 USE FrescuraNatural
 GO
 
-CREATE OR ALTER PROCEDURE proveedores.sp_generar_precios (@cant_reg INT = 1000)
+SELECT TOP 20 * FROM proveedores.precio
+GO
+
+DELETE FROM proveedores.precio
+DBCC CHECKIDENT ('proveedores.precio', RESEED, 0);
+GO
+
+CREATE OR ALTER PROCEDURE proveedores.sp_generar_precios (@cant_intentos INT = 1000)
 AS
+	DECLARE @randomQTY INT = CAST(RAND() * 10 AS INT);
 	DECLARE @loop INT;
-	DECLARE @intentos TINYINT;
 	DECLARE @id_producto INT;
+	DECLARE @pais VARCHAR(50);
+	DECLARE @maximo INT;
+	DECLARE @monto INT;
+	DECLARE @minimo INT;
+	DECLARE @mapk DECIMAL(7, 2);
+	DECLARE @mpk DECIMAL(7, 2);
+	DECLARE @mipk DECIMAL(7, 2);
 	DECLARE @id_proveedor INT;
-	DECLARE @cant_prov INT;
-	DECLARE @pais VARCHAR(MAX);
-	DECLARE @cant_precios INT = (SELECT COUNT(1) FROM datos.precios);
-	DECLARE @monto DECIMAL(8, 2);
+	DECLARE @incremento DECIMAL(2, 2);
+	DECLARE @decremento DECIMAL(2, 2);
+	DECLARE @bit_decision TINYINT;
 BEGIN
 	SET NOCOUNT ON
-	
-	--Configurar variables iterativas, y límite de iteración por cantidad de proveedores.
+
+	--PASO 0. Inicializar precios del proveedor mercado central.
+	INSERT INTO proveedores.precio (id_producto, id_proveedor, monto, mpk)
+		EXEC ('
+		DECLARE @id_mercado_central INT;
+		SELECT @id_mercado_central = id FROM proveedores.proveedor WHERE nombre = ''Mercado Central'';
+		SELECT TOP ' + @randomQTY + ' id, @id_mercado_central, modal, mopk 
+		FROM datos.precios 
+		WHERE procedencia = ''Mercado Central''');
+		--Se utiliza SQL dinámico para elegir una cantidad aleatoria de precios.
+
+	--POR CADA PROVEEDOR
 	SET @loop = 1;
-	--Por cada proveedor
-	WHILE @loop <= @cant_reg
+	WHILE @loop <= @cant_intentos
 	BEGIN
-		--Elegir el precio a asignar.
-		SELECT @id_producto = CAST(RAND(CHECKSUM(NEWID())) * @cant_precios AS INT) + 1;
+		--PASO 1. Elegir un PRODUCTO aleatorio.
 		SELECT TOP 1
 			@id_producto = id,
-			@pais = procedencia,
-			@monto = modal + (CAST(RAND(CHECKSUM(NEWID())) AS DECIMAL(2, 2)) * (maximo - modal) 
-						    - CAST(RAND(CHECKSUM(NEWID())) AS DECIMAL(2, 2)) * (modal - minimo)) * 
-							CAST(RAND(CHECKSUM(NEWID())) * 2 AS INT)
+				   @pais = procedencia,
+				 @maximo = maximo,
+				  @monto = modal,
+				 @minimo = minimo,
+				   @mapk = mapk,
+					@mpk = mopk,
+				   @mipk = mipk
 		FROM datos.precios
+		WHERE modal > 0 AND mopk > 0 AND procedencia <> 'Mercado Central' 
 		ORDER BY NEWID();
-		
-		--ELEGIR EL PROVEEDOR CON LA PROCEDENCIA COINCIDENTE.
-		--Elige un número de orden de la lista de proveedores.
-		SELECT @cant_prov = (SELECT COUNT(1) FROM proveedores.proveedor WHERE pais = @pais);
-		SELECT @id_proveedor = CAST(RAND(CHECKSUM(NEWID())) * @cant_prov AS INT) + 1;
-		--Toma el identificador del proveedor en la fila encontrada.
-		WITH proveedores AS (
-			SELECT ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS fila, * FROM proveedores.proveedor WHERE pais = @pais
-		)
-		SELECT @id_proveedor = id FROM proveedores WHERE fila = @id_proveedor 
-		
-		--Insertar el producto, proveedor y monto en la tabla de precios.
-		INSERT INTO proveedores.precio (id_producto, id_proveedor, monto) VALUES
-			(@id_producto, @id_proveedor, @monto);
 
+		--PASO 2. Elegir un PROVEEDOR aleatorio, cuya PROCEDENCIA coincida con el PRODUCTO ELEGIDO.
+		SELECT @id_proveedor = id FROM proveedores.proveedor WHERE pais = @pais
+		ORDER BY NEWID();
+
+		--PASO 3. Definir los MONTOS para la dupla (PRODUCTO, PROVEEDOR)
+			--Configurar variables de incremento, decremento y bit de decisión.
+		SET @incremento = CAST(RAND(CHECKSUM(NEWID())) AS DECIMAL(2, 2));
+		SET @decremento = CAST(RAND(CHECKSUM(NEWID())) AS DECIMAL(2, 2));
+		SET @bit_decision = CAST(RAND(CHECKSUM(NEWID())) * 2 AS TINYINT);
+
+		--Calcular el MONTO por bulto y por kilo/unidad.
+		SET @monto = @monto + CAST((@incremento * (@maximo - @monto) - @decremento * (@monto - @minimo)) * @bit_decision AS INT);
+		SET   @mpk = CAST(
+			@mpk + 
+			(@incremento * (@mapk - @mpk) - @decremento * (@mpk - @mipk)) * 
+			@bit_decision 
+			AS DECIMAL(7, 2));
+		
+		--PASO 4. Insertar el PRODUCTO, PROVEEDOR y MONTOs en la tabla de precios.
+		INSERT INTO proveedores.precio (id_producto, id_proveedor, monto, mpk) VALUES
+			(@id_producto, @id_proveedor, @monto, @mpk);
+			
 		SET @loop = @loop + 1;
 	END
 END
@@ -51,3 +84,5 @@ GO
 
 EXEC proveedores.sp_generar_precios 1000
 GO
+
+SELECT TOP 20 * FROM proveedores.precio

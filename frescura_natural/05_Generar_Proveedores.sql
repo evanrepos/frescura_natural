@@ -1,6 +1,9 @@
 USE FrescuraNatural
 GO
 
+SELECT TOP 20 * FROM proveedores.proveedor
+GO
+
 CREATE OR ALTER FUNCTION json_to_function (@json NVARCHAR(MAX), @tag VARCHAR(MAX))
 RETURNS TABLE
 AS
@@ -81,10 +84,15 @@ BEGIN
             (@nombre + ' ' + @apellido, @procedencia);
         SET @i = @i + 1;
     END
-    INSERT INTO proveedores.proveedor (nombre, pais) VALUES
-        ('Mercado Central', 'Mercado Central');
+    IF NOT EXISTS (SELECT nombre FROM proveedores.proveedor WHERE nombre = 'Mercado Central')
+    BEGIN
+        INSERT INTO proveedores.proveedor (nombre, pais) VALUES
+            ('Mercado Central', 'Mercado Central');
+    END
 END
 GO
 
 EXEC proveedores.sp_generar_proveedores 'E:\frescura_natural\fuente\05.nombres\data.json', 1000
 GO
+
+SELECT * FROM proveedores.proveedor

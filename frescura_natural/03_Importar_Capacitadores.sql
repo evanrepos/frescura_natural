@@ -1,6 +1,9 @@
 USE FrescuraNatural
 GO
 
+SELECT TOP 20 * FROM sucursales.capacitador
+GO
+
 CREATE OR ALTER PROCEDURE sucursales.sp_ingresar_capacitadores 
     @path VARCHAR(100),
     @row_terminator CHAR(2) = '\n',
@@ -8,6 +11,10 @@ CREATE OR ALTER PROCEDURE sucursales.sp_ingresar_capacitadores
 AS
 BEGIN
     SET NOCOUNT ON 
+
+    DELETE FROM sucursales.capacitador
+    DBCC CHECKIDENT ('sucursales.capacitador', RESEED, 0);
+
     CREATE TABLE #capacitadores(
         numero_registro VARCHAR(31),
         nombre_completo VARCHAR(50),
@@ -28,9 +35,13 @@ BEGIN
     );';
     EXEC (@bulk_insert);
     
+    
+
     INSERT INTO sucursales.capacitador (numero_registro, nombre, telefono, mail)
     SELECT * FROM #capacitadores;
 END
 GO
 
 EXEC sucursales.sp_ingresar_capacitadores 'E:\frescura_natural\fuente\03.capacitadores\capacitadores-de-manipuladores-de-alimentos.csv'
+SELECT TOP 20 * FROM sucursales.capacitador
+

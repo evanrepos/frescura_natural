@@ -1,12 +1,17 @@
 USE FrescuraNatural
 GO
 
+SELECT TOP 20 * FROM datos.mermas
+GO
+
 CREATE OR ALTER PROCEDURE datos.sp_ingresar_mermas
     @path VARCHAR(MAX),
     @page_name VARCHAR(MAX)
 AS
 BEGIN
     SET NOCOUNT ON 
+
+    DELETE FROM datos.mermas
 
     DECLARE @openrowset VARCHAR(MAX);
     SET @openrowset = 'INSERT INTO datos.mermas
@@ -20,3 +25,4 @@ END;
 GO
 
 EXEC datos.sp_ingresar_mermas 'E:\frescura_natural\fuente\01.mermas\desperdicios.xlsx', 'desperdicios'
+SELECT TOP 20 * FROM datos.mermas
