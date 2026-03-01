@@ -834,13 +834,12 @@ BEGIN
         RETURN;
     END
 
-    UPDATE pr
+    UPDATE proveedores.precio
        SET id_producto  = @id_producto,
            id_proveedor = @id_proveedor,
            monto        = @monto,
            mpk          = @mpk
-    FROM proveedores.precio pr
-    WHERE pr.id = @id;
+    WHERE id = @id;
 
     SELECT 'Precio actualizado correctamente' AS mensaje;
 END
@@ -871,7 +870,820 @@ BEGIN
 END
 GO
 
+----------------------------------------------------------
+-- TEMPORADA
+----------------------------------------------------------
+IF OBJECT_ID('productos.sp_insert_temporada') IS NOT NULL
+    DROP PROCEDURE productos.sp_insert_temporada;
+GO
+CREATE PROCEDURE productos.sp_insert_temporada
+    @descripcion VARCHAR(50),
+    @mes_desde   TINYINT = NULL,
+    @dia_desde   TINYINT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    -- Reglas
+    IF @descripcion IS NULL OR LTRIM(RTRIM(@descripcion)) = ''
+        SET @err += '- La descripción de la temporada es obligatoria.' + CHAR(10);
+
+    IF @mes_desde IS NOT NULL AND (@mes_desde < 1 OR @mes_desde > 12)
+        SET @err += '- El mes debe estar entre 1 y 12.' + CHAR(10);
+
+    IF @dia_desde IS NOT NULL AND (@dia_desde < 1 OR @dia_desde > 31)
+        SET @err += '- El dia debe estar entre 1 y 31.' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO productos.temporada (descripcion, mes_desde, dia_desde)
+    VALUES (@descripcion, @mes_desde, @dia_desde);
+
+    SELECT 'Temporada insertada correctamente' AS mensaje;
+END
+GO
 
 
+IF OBJECT_ID('productos.sp_update_temporada') IS NOT NULL
+    DROP PROCEDURE productos.sp_update_temporada;
+GO
+CREATE PROCEDURE productos.sp_update_temporada
+    @id          INT,
+    @descripcion VARCHAR(50),
+    @mes_desde   TINYINT = NULL,
+    @dia_desde   TINYINT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    IF NOT EXISTS (SELECT 1 FROM productos.temporada WHERE id = @id)
+        SET @err += '- No existe la temporada indicada.' + CHAR(10);
+
+    IF @descripcion IS NULL OR LTRIM(RTRIM(@descripcion)) = ''
+        SET @err += '- La descripción de la temporada es obligatoria.' + CHAR(10);
+
+    IF @mes_desde IS NOT NULL AND (@mes_desde < 1 OR @mes_desde > 12)
+        SET @err += '- El mes_desde debe estar entre 1 y 12.' + CHAR(10);
+
+    IF @dia_desde IS NOT NULL AND (@dia_desde < 1 OR @dia_desde > 31)
+        SET @err += '- El dia_desde debe estar entre 1 y 31.' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    UPDATE productos.temporada
+       SET descripcion = @descripcion,
+           mes_desde   = @mes_desde,
+           dia_desde   = @dia_desde
+    WHERE id = @id;
+
+    SELECT 'Temporada actualizada correctamente' AS mensaje;
+END
+GO
 
 
+IF OBJECT_ID('productos.sp_delete_temporada') IS NOT NULL
+    DROP PROCEDURE productos.sp_delete_temporada;
+GO
+CREATE PROCEDURE productos.sp_delete_temporada
+    @id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    IF NOT EXISTS (SELECT 1 FROM productos.temporada WHERE id = @id)
+        SET @err += '- No existe la temporada indicada.' + CHAR(10);
+	--categorias que referencian esta temporada
+    IF EXISTS (SELECT 1 FROM productos.categoria WHERE id_temporada = @id)
+        SET @err += '- No se puede eliminar: existen categorías asociadas a la temporada.' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    DELETE FROM productos.temporada WHERE id = @id;
+    SELECT 'Temporada eliminada correctamente' AS mensaje;
+END
+GO
+
+----------------------------------------------------------
+-- CATEGORIA
+----------------------------------------------------------
+IF OBJECT_ID('productos.sp_insert_categoria') IS NOT NULL
+    DROP PROCEDURE productos.sp_insert_categoria;
+GO
+CREATE PROCEDURE productos.sp_insert_categoria
+    @id_temporada   INT,
+    @descripcion    VARCHAR(50),
+    @dias_caducidad TINYINT = NULL,
+    @margen         TINYINT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    -- FKs
+    IF NOT EXISTS (SELECT 1 FROM productos.temporada WHERE id = @id_temporada)
+        SET @err += '- La temporada indicada no existe.' + CHAR(10);
+    -- 
+    IF @descripcion IS NULL OR LTRIM(RTRIM(@descripcion)) = ''
+        SET @err += '- La descripción de la categoría es obligatoria.' + CHAR(10);
+
+    IF @dias_caducidad IS NOT NULL AND @dias_caducidad <= 0
+        SET @err += '- Los días de caducidad deben ser mayor a 0.' + CHAR(10);
+
+    IF @margen IS NOT NULL AND @margen <= 0
+        SET @err += '- El margen debe ser mayor a 0.' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO productos.categoria (id_temporada, descripcion, dias_caducidad, margen)
+    VALUES (@id_temporada, @descripcion, @dias_caducidad, @margen);
+
+    SELECT 'Categoria insertada correctamente' AS mensaje;
+END
+GO
+
+
+IF OBJECT_ID('productos.sp_update_categoria') IS NOT NULL
+    DROP PROCEDURE productos.sp_update_categoria;
+GO
+CREATE PROCEDURE productos.sp_update_categoria
+    @id             INT,
+    @id_temporada   INT,
+    @descripcion    VARCHAR(50),
+    @dias_caducidad TINYINT = NULL,
+    @margen         TINYINT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    IF NOT EXISTS (SELECT 1 FROM productos.categoria WHERE id = @id)
+        SET @err += '- No existe la categoría indicada.' + CHAR(10);
+
+    IF NOT EXISTS (SELECT 1 FROM productos.temporada WHERE id = @id_temporada)
+        SET @err += '- La temporada indicada no existe.' + CHAR(10);
+
+    IF @descripcion IS NULL OR LTRIM(RTRIM(@descripcion)) = ''
+        SET @err += '- La descripción de la categoría es obligatoria.' + CHAR(10);
+
+    IF @dias_caducidad IS NOT NULL AND @dias_caducidad <= 0
+        SET @err += '- Los días de caducidad deben ser mayor a 0.' + CHAR(10);
+
+    IF @margen IS NOT NULL AND @margen <= 0
+        SET @err += '- El margen debe ser mayor a 0.' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    UPDATE productos.categoria 
+       SET id_temporada   = @id_temporada,
+           descripcion    = @descripcion,
+           dias_caducidad = @dias_caducidad,
+           margen         = @margen
+    WHERE id = @id;
+
+    SELECT 'Categoría actualizada correctamente' AS mensaje;
+END
+GO
+
+
+IF OBJECT_ID('productos.sp_delete_categoria') IS NOT NULL
+    DROP PROCEDURE productos.sp_delete_categoria;
+GO
+CREATE PROCEDURE productos.sp_delete_categoria
+    @id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    IF NOT EXISTS (SELECT 1 FROM productos.categoria WHERE id = @id)
+        SET @err += '- No existe la categoría indicada.' + CHAR(10);
+
+    -- productos asociados a la categoría
+    IF EXISTS (SELECT 1 FROM productos.producto WHERE id_categoria = @id)
+        SET @err += '- No se puede eliminar: existen productos asociados a la categoría.' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    DELETE FROM productos.categoria WHERE id = @id;
+    SELECT 'Categoría eliminada correctamente' AS mensaje;
+END
+GO
+
+----------------------------------------------------------
+-- PRODUCTO
+----------------------------------------------------------
+IF OBJECT_ID('productos.sp_insert_producto') IS NOT NULL
+    DROP PROCEDURE productos.sp_insert_producto;
+GO
+CREATE PROCEDURE productos.sp_insert_producto
+    @id_categoria INT,
+    @especie      VARCHAR(50),
+    @variedad     VARCHAR(50) = NULL,
+    @procedencia  VARCHAR(50) = NULL,
+    @envase       CHAR(2)     = NULL,
+    @calidad      CHAR(2)     = NULL,
+    @grado        CHAR(3)     = NULL,
+    @tamaño       VARCHAR(12) = NULL,   
+    @peso         SMALLINT    = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    -- FK existente
+    IF NOT EXISTS (SELECT 1 FROM productos.categoria WHERE id = @id_categoria)
+        SET @err += '- La categoría indicada no existe.' + CHAR(10);
+    -- 
+    IF @especie IS NULL OR LTRIM(RTRIM(@especie)) = ''
+        SET @err += '- La especie es obligatoria.' + CHAR(10);
+
+    -- UQ 
+    IF EXISTS (
+        SELECT 1 FROM productos.producto
+        WHERE especie = @especie
+          AND ISNULL(variedad,'')   = ISNULL(@variedad,'')
+          AND ISNULL(procedencia,'')= ISNULL(@procedencia,'')
+          AND ISNULL(envase,'')     = ISNULL(@envase,'')
+          AND ISNULL(peso,-1)       = ISNULL(@peso,-1)
+          AND ISNULL(calidad,'')    = ISNULL(@calidad,'')
+          AND ISNULL(tamaño,'')     = ISNULL(@tamaño,'')
+          AND ISNULL(grado,'')      = ISNULL(@grado,'')
+    )
+        SET @err += '- Ya existe un producto con los mismos atributos.' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO productos.producto (
+        id_categoria, especie, variedad, procedencia, envase, calidad, grado, tamaño, peso
+    ) VALUES (
+        @id_categoria, @especie, @variedad, @procedencia, @envase, @calidad, @grado, @tamaño, @peso
+    );
+
+    SELECT 'Producto insertado correctamente' AS mensaje;
+END
+GO
+
+
+IF OBJECT_ID('productos.sp_update_producto') IS NOT NULL
+    DROP PROCEDURE productos.sp_update_producto;
+GO
+CREATE PROCEDURE productos.sp_update_producto
+    @id           INT,
+    @id_categoria INT,
+    @especie      VARCHAR(50),
+    @variedad     VARCHAR(50) = NULL,
+    @procedencia  VARCHAR(50) = NULL,
+    @envase       CHAR(2)     = NULL,
+    @calidad      CHAR(2)     = NULL,
+    @grado        CHAR(3)     = NULL,
+    @tamaño       VARCHAR(12) = NULL,
+    @peso         SMALLINT    = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    IF NOT EXISTS (SELECT 1 FROM productos.producto WHERE id = @id)
+        SET @err += '- No existe el producto indicado.' + CHAR(10);
+    -- FK
+    IF NOT EXISTS (SELECT 1 FROM productos.categoria WHERE id = @id_categoria)
+        SET @err += '- La categoría indicada no existe.' + CHAR(10);
+    -- 
+    IF @especie IS NULL OR LTRIM(RTRIM(@especie)) = ''
+        SET @err += '- La especie es obligatoria.' + CHAR(10);
+
+    -- UQ
+    IF EXISTS (
+        SELECT 1 FROM productos.producto
+        WHERE especie               = @especie
+          AND ISNULL(variedad,'')   = ISNULL(@variedad,'')
+          AND ISNULL(procedencia,'')= ISNULL(@procedencia,'')
+          AND ISNULL(envase,'')     = ISNULL(@envase,'')
+          AND ISNULL(peso,-1)       = ISNULL(@peso,-1)
+          AND ISNULL(calidad,'')    = ISNULL(@calidad,'')
+          AND ISNULL(tamaño,'')     = ISNULL(@tamaño,'')
+          AND ISNULL(grado,'')      = ISNULL(@grado,'')
+          AND id <> @id
+    )
+        SET @err += '- Ya existe otro producto con los mismos atributos.' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    UPDATE productos.producto
+       SET id_categoria = @id_categoria,
+           especie      = @especie,
+           variedad     = @variedad,
+           procedencia  = @procedencia,
+           envase       = @envase,
+           calidad      = @calidad,
+           grado        = @grado,
+           tamaño       = @tamaño,
+           peso         = @peso
+    WHERE id = @id;
+
+    SELECT 'Producto actualizado correctamente' AS mensaje;
+END
+GO
+
+
+IF OBJECT_ID('productos.sp_delete_producto') IS NOT NULL
+    DROP PROCEDURE productos.sp_delete_producto;
+GO
+CREATE PROCEDURE productos.sp_delete_producto
+    @id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    IF NOT EXISTS (SELECT 1 FROM productos.producto WHERE id = @id)
+        SET @err += '- No existe el producto indicado.' + CHAR(10);
+
+    --lotes, líneas de venta, precios
+    IF EXISTS (SELECT 1 FROM proveedores.lote WHERE id_producto = @id)
+        SET @err += '- No se puede eliminar: existen lotes asociados al producto.' + CHAR(10);
+
+    IF EXISTS (SELECT 1 FROM ventas.lineaVenta WHERE id_producto = @id)
+        SET @err += '- No se puede eliminar: existen líneas de venta asociadas al producto.' + CHAR(10);
+
+    IF EXISTS (SELECT 1 FROM proveedores.precio WHERE id_producto = @id)
+        SET @err += '- No se puede eliminar: existen precios asociados al producto.' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    DELETE FROM productos.producto WHERE id = @id;
+    SELECT 'Producto eliminado correctamente' AS mensaje;
+END
+GO
+
+
+----------------------------------------------------------
+-- CLIENTE
+----------------------------------------------------------
+IF OBJECT_ID('ventas.sp_insert_cliente') IS NOT NULL
+    DROP PROCEDURE ventas.sp_insert_cliente;
+GO
+CREATE PROCEDURE ventas.sp_insert_cliente
+    @nombre    VARCHAR(50),
+    @direccion VARCHAR(100),
+    @cuit_cuil CHAR(11) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    IF @nombre IS NULL OR LTRIM(RTRIM(@nombre)) = ''
+        SET @err += '- El nombre del cliente es obligatorio.' + CHAR(10);
+
+    IF @direccion IS NULL OR LTRIM(RTRIM(@direccion)) = ''
+        SET @err += '- La dirección del cliente es obligatoria.' + CHAR(10);
+
+    IF @cuit_cuil IS NOT NULL AND (LEN(@cuit_cuil) <> 11 OR @cuit_cuil LIKE '%[^0-9]%')
+		SET @err += '- El CUIT/CUIL debe tener exactamente 11 dígitos (o ser NULL).' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO ventas.cliente (nombre, direccion, cuit_cuil)
+    VALUES (@nombre, @direccion, @cuit_cuil);
+
+    SELECT 'Cliente insertado correctamente' AS mensaje;
+END
+GO
+
+
+IF OBJECT_ID('ventas.sp_update_cliente') IS NOT NULL
+    DROP PROCEDURE ventas.sp_update_cliente;
+GO
+CREATE PROCEDURE ventas.sp_update_cliente
+    @id        INT,
+    @nombre    VARCHAR(50),
+    @direccion VARCHAR(100),
+    @cuit_cuil CHAR(11) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    IF NOT EXISTS (SELECT 1 FROM ventas.cliente WHERE id = @id)
+        SET @err += '- No existe el cliente indicado.' + CHAR(10);
+
+    IF @nombre IS NULL OR LTRIM(RTRIM(@nombre)) = ''
+        SET @err += '- El nombre del cliente es obligatorio.' + CHAR(10);
+
+    IF @direccion IS NULL OR LTRIM(RTRIM(@direccion)) = ''
+        SET @err += '- La dirección del cliente es obligatoria.' + CHAR(10);
+	
+	IF @cuit_cuil IS NOT NULL AND (LEN(@cuit_cuil) <> 11 OR @cuit_cuil LIKE '%[^0-9]%')
+		SET @err += '- El CUIT/CUIL debe tener exactamente 11 dígitos (o ser NULL).' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    UPDATE ventas.cliente
+       SET nombre    = @nombre,
+           direccion = @direccion,
+           cuit_cuil = @cuit_cuil
+    WHERE id = @id;
+
+    SELECT 'Cliente actualizado correctamente' AS mensaje;
+END
+GO
+
+
+IF OBJECT_ID('ventas.sp_delete_cliente') IS NOT NULL
+    DROP PROCEDURE ventas.sp_delete_cliente;
+GO
+CREATE PROCEDURE ventas.sp_delete_cliente
+    @id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    IF NOT EXISTS (SELECT 1 FROM ventas.cliente WHERE id = @id)
+        SET @err += '- No existe el cliente indicado.' + CHAR(10);
+
+    -- pedidos y ventas
+    IF EXISTS (SELECT 1 FROM ventas.pedido WHERE id_cliente = @id)
+        SET @err += '- No se puede eliminar: existen pedidos asociados al cliente.' + CHAR(10);
+
+    IF EXISTS (SELECT 1 FROM ventas.venta WHERE id_cliente = @id)
+        SET @err += '- No se puede eliminar: existen ventas asociadas al cliente.' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    DELETE FROM ventas.cliente WHERE id = @id;
+    SELECT 'Cliente eliminado correctamente' AS mensaje;
+END
+GO
+
+----------------------------------------------------------
+-- PEDIDO
+----------------------------------------------------------
+IF OBJECT_ID('ventas.sp_insert_pedido') IS NOT NULL
+    DROP PROCEDURE ventas.sp_insert_pedido;
+GO
+CREATE PROCEDURE ventas.sp_insert_pedido
+    @id_cliente INT,
+    @fecha      DATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    IF NOT EXISTS (SELECT 1 FROM ventas.cliente WHERE id = @id_cliente)
+        SET @err += '- El cliente indicado no existe.' + CHAR(10);
+
+    IF @fecha IS NULL
+        SET @err += '- La fecha del pedido es obligatoria.' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO ventas.pedido (id_cliente, fecha) VALUES (@id_cliente, @fecha);
+
+    SELECT 'Pedido insertado correctamente' AS mensaje;
+END
+GO
+
+
+IF OBJECT_ID('ventas.sp_update_pedido') IS NOT NULL
+    DROP PROCEDURE ventas.sp_update_pedido;
+GO
+CREATE PROCEDURE ventas.sp_update_pedido
+    @id         INT,
+    @id_cliente INT,
+    @fecha      DATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    IF NOT EXISTS (SELECT 1 FROM ventas.pedido WHERE id = @id)
+        SET @err += '- No existe el pedido indicado.' + CHAR(10);
+
+    IF NOT EXISTS (SELECT 1 FROM ventas.cliente WHERE id = @id_cliente)
+        SET @err += '- El cliente indicado no existe.' + CHAR(10);
+
+    IF @fecha IS NULL
+        SET @err += '- La fecha del pedido es obligatoria.' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    UPDATE ventas.pedido
+       SET id_cliente = @id_cliente,
+           fecha      = @fecha
+    WHERE id = @id;
+
+    SELECT 'Pedido actualizado correctamente' AS mensaje;
+END
+GO
+
+
+IF OBJECT_ID('ventas.sp_delete_pedido') IS NOT NULL
+    DROP PROCEDURE ventas.sp_delete_pedido;
+GO
+CREATE PROCEDURE ventas.sp_delete_pedido
+    @id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    IF NOT EXISTS (SELECT 1 FROM ventas.pedido WHERE id = @id)
+        SET @err += '- No existe el pedido indicado.' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    DELETE FROM ventas.pedido WHERE id = @id;
+    SELECT 'Pedido eliminado correctamente' AS mensaje;
+END
+GO
+
+----------------------------------------------------------
+-- VENTA
+----------------------------------------------------------
+IF OBJECT_ID('ventas.sp_insert_venta') IS NOT NULL
+    DROP PROCEDURE ventas.sp_insert_venta;
+GO
+CREATE PROCEDURE ventas.sp_insert_venta
+    @id_cliente  INT,
+    @id_vendedor INT,
+    @fecha_hora  DATETIME,
+    @total       DECIMAL(9,2)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    -- FKs
+    IF NOT EXISTS (SELECT 1 FROM ventas.cliente WHERE id = @id_cliente)
+        SET @err += '- El cliente indicado no existe.' + CHAR(10);
+
+    IF NOT EXISTS (SELECT 1 FROM sucursales.vendedor WHERE id = @id_vendedor)
+        SET @err += '- El vendedor indicado no existe.' + CHAR(10);
+    -- 
+    IF @fecha_hora IS NULL
+        SET @err += '- La fecha y hora de la venta es obligatoria.' + CHAR(10);
+    ELSE IF @fecha_hora > GETDATE()
+        SET @err += '- La fecha y hora de la venta no puede ser futura.' + CHAR(10);
+
+    IF @total IS NULL OR @total <= 0
+        SET @err += '- El total de la venta debe ser mayor a 0.' + CHAR(10); 
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO ventas.venta (id_cliente, id_vendedor, fecha_hora, total)
+    VALUES (@id_cliente, @id_vendedor, @fecha_hora, @total);
+
+    SELECT 'Venta insertada correctamente' AS mensaje;
+END
+GO
+
+
+IF OBJECT_ID('ventas.sp_update_venta') IS NOT NULL
+    DROP PROCEDURE ventas.sp_update_venta;
+GO
+CREATE PROCEDURE ventas.sp_update_venta
+    @id          INT,
+    @id_cliente  INT,
+    @id_vendedor INT,
+    @fecha_hora  DATETIME,
+    @total       DECIMAL(9,2)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    IF NOT EXISTS (SELECT 1 FROM ventas.venta WHERE id = @id)
+        SET @err += '- No existe la venta indicada.' + CHAR(10);
+
+    IF NOT EXISTS (SELECT 1 FROM ventas.cliente WHERE id = @id_cliente)
+        SET @err += '- El cliente indicado no existe.' + CHAR(10);
+
+    IF NOT EXISTS (SELECT 1 FROM sucursales.vendedor WHERE id = @id_vendedor)
+        SET @err += '- El vendedor indicado no existe.' + CHAR(10);
+
+    IF @fecha_hora IS NULL
+        SET @err += '- La fecha y hora de la venta es obligatoria.' + CHAR(10);
+    ELSE IF @fecha_hora > GETDATE()
+        SET @err += '- La fecha y hora de la venta no puede ser futura.' + CHAR(10);
+
+    IF @total IS NULL OR @total <= 0
+        SET @err += '- El total de la venta debe ser mayor a 0.' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    UPDATE ventas.venta
+       SET id_cliente  = @id_cliente,
+           id_vendedor = @id_vendedor,
+           fecha_hora  = @fecha_hora,
+           total       = @total
+    WHERE id = @id;
+
+    SELECT 'Venta actualizada correctamente' AS mensaje;
+END
+GO
+
+
+IF OBJECT_ID('ventas.sp_delete_venta') IS NOT NULL
+    DROP PROCEDURE ventas.sp_delete_venta;
+GO
+CREATE PROCEDURE ventas.sp_delete_venta
+    @id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    IF NOT EXISTS (SELECT 1 FROM ventas.venta WHERE id = @id)
+        SET @err += '- No existe la venta indicada.' + CHAR(10);
+
+    --líneas de venta asociadas
+    IF EXISTS (SELECT 1 FROM ventas.lineaVenta WHERE id_venta = @id)
+        SET @err += '- No se puede eliminar: existen líneas de venta asociadas a la venta.' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    DELETE FROM ventas.venta WHERE id = @id;
+    SELECT 'Venta eliminada correctamente' AS mensaje;
+END
+GO
+
+----------------------------------------------------------
+-- LINEA VENTA
+----------------------------------------------------------
+IF OBJECT_ID('ventas.sp_insert_lineaVenta') IS NOT NULL
+    DROP PROCEDURE ventas.sp_insert_lineaVenta;
+GO
+CREATE PROCEDURE ventas.sp_insert_lineaVenta
+    @id_venta   INT,
+    @id_producto INT,
+    @cantidad   SMALLINT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    -- FKs
+    IF NOT EXISTS (SELECT 1 FROM ventas.venta WHERE id = @id_venta)
+        SET @err += '- La venta indicada no existe.' + CHAR(10);
+
+    IF NOT EXISTS (SELECT 1 FROM productos.producto WHERE id = @id_producto)
+        SET @err += '- El producto indicado no existe.' + CHAR(10);
+    --
+    IF @cantidad IS NULL OR @cantidad <= 0
+        SET @err += '- La cantidad debe ser mayor a 0.' + CHAR(10); 
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO ventas.lineaVenta (id_venta, id_producto, cantidad)
+    VALUES (@id_venta, @id_producto, @cantidad);
+
+    SELECT 'Línea de venta insertada correctamente' AS mensaje;
+END
+GO
+
+
+IF OBJECT_ID('ventas.sp_update_lineaVenta') IS NOT NULL
+    DROP PROCEDURE ventas.sp_update_lineaVenta;
+GO
+CREATE PROCEDURE ventas.sp_update_lineaVenta
+    @id          INT,
+    @id_venta    INT,
+    @id_producto INT,
+    @cantidad    SMALLINT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    IF NOT EXISTS (SELECT 1 FROM ventas.lineaVenta WHERE id = @id)
+        SET @err += '- No existe la línea de venta indicada.' + CHAR(10);
+
+    IF NOT EXISTS (SELECT 1 FROM ventas.venta WHERE id = @id_venta)
+        SET @err += '- La venta indicada no existe.' + CHAR(10);
+
+    IF NOT EXISTS (SELECT 1 FROM productos.producto WHERE id = @id_producto)
+        SET @err += '- El producto indicado no existe.' + CHAR(10);
+
+    IF @cantidad IS NULL OR @cantidad <= 0
+        SET @err += '- La cantidad debe ser mayor a 0.' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    UPDATE ventas.lineaVenta
+       SET id_venta    = @id_venta,
+           id_producto = @id_producto,
+           cantidad    = @cantidad
+    WHERE id = @id;
+
+    SELECT 'Línea de venta actualizada correctamente' AS mensaje;
+END
+GO
+
+
+IF OBJECT_ID('ventas.sp_delete_lineaVenta') IS NOT NULL
+    DROP PROCEDURE ventas.sp_delete_lineaVenta;
+GO
+CREATE PROCEDURE ventas.sp_delete_lineaVenta
+    @id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @err VARCHAR(MAX) = '';
+
+    IF NOT EXISTS (SELECT 1 FROM ventas.lineaVenta WHERE id = @id)
+        SET @err += '- No existe la línea de venta indicada.' + CHAR(10);
+
+    IF LEN(@err) > 0
+    BEGIN
+        RAISERROR(@err, 16, 1);
+        RETURN;
+    END
+
+    DELETE FROM ventas.lineaVenta WHERE id = @id;
+    SELECT 'Línea de venta eliminada correctamente' AS mensaje;
+END
+GO
