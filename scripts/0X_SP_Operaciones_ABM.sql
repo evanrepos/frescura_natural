@@ -3,10 +3,9 @@
 Universidad Nacional de La Matanza
 Trabajo Práctico Integrador - Bases de Datos Aplicadas
 Fecha de entrega: 04/03/2026
-Integrantes: 
-Apellido y Nombre						
-Gonzáles Fernándes Iván Alejandro		
-Mamani Estrada Lucas Gabriel			
+Integrantes: 					
+- Gonzáles Fernándes Iván Alejandro		
+- Mamani Estrada Lucas Gabriel			
 ------------------------------------------------------------
 */
 ---- CREACION DE SPs PARA ALTA, BAJA Y MODIFICACION DE TODAS LAS TABLAS
