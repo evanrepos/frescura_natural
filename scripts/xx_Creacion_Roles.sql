@@ -72,12 +72,3 @@ JOIN sys.database_principals pr
 WHERE pr.name = 'rol_consultas'
   AND dp.class_desc = 'SCHEMA'
 ORDER BY estado, permiso, esquema;
-
-
-
-
-
-
-
-
-
