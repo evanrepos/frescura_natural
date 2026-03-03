@@ -2,10 +2,10 @@
 ------------------------------------------------------------
 Universidad Nacional de La Matanza
 Trabajo Práctico Integrador - Bases de Datos Aplicadas
-Integrantes: 
-Apellido y Nombre						
-Gonzáles Fernándes Iván Alejandro		
-Mamani Estrada Lucas Gabriel			
+Fecha de entrega: 04/03/2026
+Integrantes: 					
+- Gonzáles Fernándes Iván Alejandro		
+- Mamani Estrada Lucas Gabriel			
 ------------------------------------------------------------
 */
 ----CREACIÓN DE LA BASE DE DATOS
@@ -43,6 +43,8 @@ GO
 CREATE SCHEMA sucursales;  
 GO
 CREATE SCHEMA ventas;     
+GO
+CREATE SCHEMA seguridad;
 GO
 
 PRINT 'Esquemas creados correctamente';
