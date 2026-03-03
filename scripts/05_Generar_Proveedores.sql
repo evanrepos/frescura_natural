@@ -4,6 +4,10 @@ GO
 SELECT TOP 20 * FROM proveedores.proveedor
 GO
 
+DELETE FROM proveedores.proveedor
+DBCC CHECKIDENT('proveedores.proveedor', RESEED, 0)
+GO
+
 CREATE OR ALTER FUNCTION json_to_function (@json NVARCHAR(MAX), @tag VARCHAR(MAX))
 RETURNS TABLE
 AS
@@ -21,18 +25,13 @@ AS
     DECLARE @json NVARCHAR(MAX);
     DECLARE @sql NVARCHAR(MAX);
     DECLARE @i INT;
-    DECLARE @cantidad INT;
     DECLARE @nombre VARCHAR(MAX);
     DECLARE @apellido VARCHAR(MAX);
     DECLARE @procedencia VARCHAR(MAX);
 BEGIN
     --0. CONFIGURACIÓN PREVIA
 	SET NOCOUNT ON
-    CREATE TABLE #procedencia
-    (   
-        id INT IDENTITY(1, 1),
-        nombre VARCHAR(MAX)
-    );
+
     SET @sql = '
         SELECT @json_out = BulkColumn
         FROM OPENROWSET(
@@ -54,36 +53,30 @@ BEGIN
     BEGIN
         IF (SELECT CAST(RAND() * 2 AS INT)) = 1
         BEGIN
-            SET @cantidad = (SELECT COUNT(1) FROM json_to_function(@json, 'femalename'));
-            SET @nombre = (SELECT nombre FROM json_to_function(@json, 'femalename') 
-                WHERE nro = (SELECT CAST((RAND() * @cantidad) + 1 AS INT)));
+            SELECT TOP 1 @nombre = nombre FROM json_to_function(@json, 'femalename')
+            ORDER BY NEWID()
         END
         ELSE
         BEGIN
-            SET @cantidad = (SELECT COUNT(1) FROM json_to_function(@json, 'malename'));
-            SET @nombre = (SELECT nombre FROM json_to_function(@json, 'malename') 
-                WHERE nro = (SELECT CAST((RAND() * @cantidad) + 1 AS INT)));
+            SELECT TOP 1 @nombre = nombre FROM json_to_function(@json, 'malename')
+            ORDER BY NEWID()
         END
 
         --Elige apellido.
-        SET @cantidad = (SELECT COUNT(1) FROM json_to_function(@json, 'lastname'));
-        SET @apellido = (SELECT nombre FROM json_to_function(@json, 'lastname') 
-            WHERE nro = (SELECT CAST((RAND() * @cantidad) + 1 AS INT)) );
+        SELECT TOP 1 @apellido = nombre FROM json_to_function(@json, 'lastname')
+        ORDER BY NEWID()
 
         --Elige procedencia
-        INSERT INTO #procedencia
-            SELECT DISTINCT procedencia FROM datos.precios
-            WHERE procedencia <> 'Mercado Central'
-            ORDER BY procedencia ASC
-        SET @cantidad = (SELECT COUNT(1) FROM #procedencia);
-        SET @procedencia = (SELECT nombre FROM #procedencia 
-            WHERE id = (SELECT CAST((RAND() * @cantidad) + 1 AS INT)) );
+        SELECT TOP 1 @procedencia = procedencia FROM datos.precios
+        WHERE procedencia <> 'Mercado Central'
+        ORDER BY NEWID()
 
     --3. INSERCIÓN DE DATOS.
         INSERT INTO proveedores.proveedor (nombre, pais) VALUES
             (@nombre + ' ' + @apellido, @procedencia);
         SET @i = @i + 1;
     END
+
     IF NOT EXISTS (SELECT nombre FROM proveedores.proveedor WHERE nombre = 'Mercado Central')
     BEGIN
         INSERT INTO proveedores.proveedor (nombre, pais) VALUES
@@ -92,7 +85,7 @@ BEGIN
 END
 GO
 
-EXEC proveedores.sp_generar_proveedores 'E:\frescura_natural\fuente\05.nombres\data.json', 1000
+EXEC proveedores.sp_generar_proveedores 'E:\frescura_natural\fuente\05.nombres\data.json', 50
 GO
 
 SELECT * FROM proveedores.proveedor

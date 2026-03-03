@@ -58,12 +58,85 @@ BEGIN
 END
 GO
 
-EXEC sucursales.sp_ingresar_sucursales 'C:\fuente\mermas\desperdicios.xlsx', 'desperdicios'
+CREATE OR ALTER PROCEDURE sucursales.sp_generar_vendedores (@path NVARCHAR(MAX))
+AS
+    DECLARE @json NVARCHAR(MAX);
+    DECLARE @sql NVARCHAR(MAX);
+    DECLARE @control_bit BIT = 0;
+    DECLARE @id_sucursal INT;
+    DECLARE @id_capacitador INT;
+    DECLARE @nombre VARCHAR(MAX);
+    DECLARE @apellido VARCHAR(MAX);
+    DECLARE @date DATE;
+BEGIN
+    --0. CONFIGURACIÓN PREVIA
+	SET NOCOUNT ON
+
+    SET @sql = '
+        SELECT @json_out = BulkColumn
+        FROM OPENROWSET(
+            BULK ''' + @path + ''',
+            SINGLE_CLOB
+        ) AS j;
+    ';
+
+    --1. IMPORTACIÓN DE NOMBRES
+    EXEC sp_executesql 
+        @sql,
+        N'@json_out NVARCHAR(MAX) OUTPUT',
+        @json_out = @json OUTPUT;
+
+	--2. GENERAR VENDEDORES
+    WHILE @control_bit = 0
+    BEGIN
+        --Elige capacitador
+        SELECT TOP 1 @id_capacitador = id FROM sucursales.capacitador
+        ORDER BY NEWID()
+
+        --Elige sucursal
+        SELECT TOP 1 @id_sucursal = id FROM sucursales.sucursal
+        ORDER BY NEWID()
+
+        --Elige nombre de hombre o mujer.
+        IF (SELECT CAST(RAND() * 2 AS INT)) = 1
+        BEGIN
+            SELECT TOP 1 @nombre = nombre FROM json_to_function(@json, 'femalename')
+            ORDER BY NEWID()
+        END
+        ELSE
+        BEGIN
+            SELECT TOP 1 @nombre = nombre FROM json_to_function(@json, 'malename')
+            ORDER BY NEWID()
+        END
+
+        --Elige apellido.
+        SELECT TOP 1 @apellido = nombre FROM json_to_function(@json, 'lastname')
+        ORDER BY NEWID()
+
+        SELECT @date = CAST(CAST(RAND(CHECKSUM(NEWID())) * 3000 + 42500 AS DATETIME) AS DATE)
+
+    --3. INSERCIÓN DE DATOS.
+        INSERT INTO sucursales.vendedor (id_capacitador, id_sucursal, nombre, fecha_capacitacion) VALUES
+            (@id_capacitador, @id_sucursal, @nombre + ' ' + @apellido, @date);
+        IF NOT EXISTS (SELECT id FROM sucursales.sucursal WHERE id NOT IN (SELECT id_sucursal FROM sucursales.vendedor))
+            SET @control_bit = 1;
+    END
+ 
+END
+GO
+
+EXEC sucursales.sp_ingresar_sucursales 'E:\frescura_natural\fuente\01.mermas\desperdicios.xlsx', 'desperdicios'
 GO
 
 --- CONSULTAS PARA PONER EN EL TESTING 
 --SELECT COUNT(*) FROM sucursales.sucursal; --deben salir 20 sucursales
---SELECT * FROM sucursales.sucursal
+SELECT * FROM sucursales.sucursal
+
+EXEC sucursales.sp_generar_vendedores 'E:\frescura_natural\fuente\05.nombres\data.json'
+GO
+
+SELECT * FROM sucursales.vendedor
+GO
 
 --si lo ejecuto devuelta deben seguir saliendo 20 sucursales
 --EXEC sucursales.sp_ingresar_sucursales 'C:\fuente\mermas\desperdicios.xlsx', 'desperdicios'

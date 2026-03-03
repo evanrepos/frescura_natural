@@ -34,8 +34,8 @@ BEGIN
         mipk DECIMAL(7, 2),
     )
     --Al iniciar, inicializa los precios de la tabla en cero, permitiendo la actualización y la inserción de nuevos productos.
-    UPDATE datos.precios SET maximo = 0, modal = 0, minimo = 0, mapk = 0, mopk = 0, mipk = 0,
-        procedencia = 'Mercado Central' WHERE procedencia = ''
+    UPDATE datos.precios SET maximo = 0, modal = 0, minimo = 0, mapk = 0, mopk = 0, mipk = 0;
+    UPDATE datos.precios SET procedencia = 'Mercado Central' WHERE procedencia = '';
 
     --Al insertar, rige la constraint UNIQUE para productos, evitando duplicados.
     --RECONFIGURE
@@ -139,11 +139,12 @@ GO
 
 --CARGAR LOTE DE PRODUCTOS
 EXEC datos.cargar_lote 'E:\frescura_natural\fuente\04.precios_mayoristas';
-GO
+--GO
 
 --CARGAR ARCHIVO DE DÍA ESPECÍFICO
---EXEC datos.ingresar_precios_dia 'E:\frescura_natural\fuente\04.precios_mayoristas\02', '260226'
---GO
+--EXEC datos.ingresar_precios_dia 'E:\frescura_natural\fuente\04.precios_mayoristas\02', '270226'
+GO
+
 SELECT * FROM datos.precios
 ORDER BY id
 GO

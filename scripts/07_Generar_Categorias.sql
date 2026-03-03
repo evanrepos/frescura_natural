@@ -8,6 +8,7 @@ BEGIN
 	DBCC CHECKIDENT ('productos.temporada', RESEED, 0)
 
 	INSERT INTO productos.temporada (descripcion, mes_desde, dia_desde) VALUES
+		('Desconocida', 0, 0),
 		('Primavera', 9, 21),
 		   ('Verano', 12, 21),
 		    ('Otoño', 3, 21),
@@ -21,6 +22,10 @@ AS
 BEGIN
 	DELETE FROM productos.categoria
 	DBCC CHECKIDENT ('productos.categoria', RESEED, 0)
+
+	SELECT @id_temporada = id FROM productos.temporada WHERE descripcion LIKE '%Desconocida%'
+	INSERT INTO productos.categoria (id_temporada, descripcion, dias_caducidad, margen) VALUES
+		(@id_temporada , 'Otros' , 0, CAST(RAND(CHECKSUM(NEWID())) * 7 + 1 AS INT) * 5);
 
 	SELECT @id_temporada = id FROM productos.temporada WHERE descripcion LIKE '%Primavera%'
 	INSERT INTO productos.categoria (id_temporada, descripcion, dias_caducidad, margen) VALUES
@@ -36,7 +41,8 @@ BEGIN
 
 	SELECT @id_temporada = id FROM productos.temporada WHERE descripcion LIKE '%Otoño%'
 	INSERT INTO productos.categoria (id_temporada, descripcion, dias_caducidad, margen) VALUES
-		(@id_temporada , 'Frutas de pepita', 90, CAST(RAND(CHECKSUM(NEWID())) * 7 + 1 AS INT) * 5)
+		(@id_temporada , 'Frutas de pepita', 90, CAST(RAND(CHECKSUM(NEWID())) * 7 + 1 AS INT) * 5),
+		(@id_temporada , 'Frutos Secos', 120, CAST(RAND(CHECKSUM(NEWID())) * 7 + 1 AS INT) * 5)
 
 	SELECT @id_temporada = id FROM productos.temporada WHERE descripcion LIKE '%Invierno%'
 	INSERT INTO productos.categoria (id_temporada, descripcion, dias_caducidad, margen) VALUES
