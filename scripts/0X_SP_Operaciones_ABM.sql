@@ -92,7 +92,7 @@ BEGIN
         SET @err += '- No se puede eliminar, hay vendedores asociados a la sucursal.' + CHAR(10);
     
 	-- ingresos de proveedores a esta sucursal
-    IF EXISTS (SELECT 1 FROM proveedores.ingreso WHERE id_sucursal = @id)
+    IF EXISTS (SELECT 1 FROM sucursales.ingreso WHERE id_sucursal = @id)
         SET @err += '- No se puede eliminar: hay ingresos de proveedores asociados a la sucursal.' + CHAR(10);
 
     IF LEN(@err) > 0
@@ -421,7 +421,7 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM proveedores.proveedor WHERE id = @id)
         SET @err += '- No existe el proveedor indicado.' + CHAR(10);
 
-    IF EXISTS (SELECT 1 FROM proveedores.ingreso WHERE id_proveedor = @id)
+    IF EXISTS (SELECT 1 FROM sucursales.ingreso WHERE id_proveedor = @id)
         SET @err += '- No se puede eliminar: existen ingresos asociados al proveedor.' + CHAR(10);
 
     IF EXISTS (SELECT 1 FROM proveedores.precio WHERE id_proveedor = @id)
@@ -447,7 +447,8 @@ GO
 CREATE PROCEDURE proveedores.sp_insert_ingreso
     @id_proveedor INT,
     @id_sucursal  INT,
-    @fecha_hora   DATETIME
+    @fecha_hora   DATETIME,
+    @importe DECIMAL(9, 2)
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -461,6 +462,8 @@ BEGIN
     -- 
     IF @fecha_hora IS NULL
         SET @err += '- La fecha y hora del ingreso es obligatoria.' + CHAR(10);
+    IF @importe <= 0
+        SET @err += '- El importe ingresado es negativo. Ingrese un valor positivo.' + CHAR(10);
 
     IF LEN(@err) > 0
     BEGIN
@@ -468,7 +471,7 @@ BEGIN
         RETURN;
     END
 
-    INSERT INTO proveedores.ingreso (id_proveedor, id_sucursal, fecha_hora)
+    INSERT INTO sucursales.ingreso (id_proveedor, id_sucursal, fecha_hora)
     VALUES (@id_proveedor, @id_sucursal, @fecha_hora);
 
     SELECT 'Ingreso insertado correctamente' AS mensaje;
@@ -483,13 +486,14 @@ CREATE PROCEDURE proveedores.sp_update_ingreso
     @id           INT,
     @id_proveedor INT,
     @id_sucursal  INT,
-    @fecha_hora   DATETIME
+    @fecha_hora   DATETIME,
+    @importe DECIMAL(9, 2)
 AS
 BEGIN
     SET NOCOUNT ON;
     DECLARE @err VARCHAR(MAX) = '';
 
-    IF NOT EXISTS (SELECT 1 FROM proveedores.ingreso WHERE id = @id)
+    IF NOT EXISTS (SELECT 1 FROM sucursales.ingreso WHERE id = @id)
         SET @err += '- No existe el ingreso indicado.' + CHAR(10);
 
     IF NOT EXISTS (SELECT 1 FROM proveedores.proveedor WHERE id = @id_proveedor)
@@ -497,6 +501,9 @@ BEGIN
 
     IF NOT EXISTS (SELECT 1 FROM sucursales.sucursal WHERE id = @id_sucursal)
         SET @err += '- La sucursal indicada no existe.' + CHAR(10);
+
+    IF @importe <= 0
+        SET @err += '- El importe ingresado es negativo. Ingrese un valor positivo.' + CHAR(10);
 
     IF @fecha_hora IS NULL
         SET @err += '- La fecha y hora del ingreso es obligatoria.' + CHAR(10);
@@ -507,10 +514,11 @@ BEGIN
         RETURN;
     END
 
-    UPDATE proveedores.ingreso
+    UPDATE sucursales.ingreso
        SET id_proveedor = @id_proveedor,
            id_sucursal  = @id_sucursal,
-           fecha_hora   = @fecha_hora
+           fecha_hora   = @fecha_hora,
+                importe = @importe
     WHERE id = @id;
 
     SELECT 'Ingreso actualizado correctamente' AS mensaje;
@@ -528,11 +536,11 @@ BEGIN
     SET NOCOUNT ON;
     DECLARE @err VARCHAR(MAX) = '';
 
-    IF NOT EXISTS (SELECT 1 FROM proveedores.ingreso WHERE id = @id)
+    IF NOT EXISTS (SELECT 1 FROM sucursales.ingreso WHERE id = @id)
         SET @err += '- No existe el ingreso indicado.' + CHAR(10);
 
     --lotes asociados
-    IF EXISTS (SELECT 1 FROM proveedores.lote WHERE id_ingreso = @id)
+    IF EXISTS (SELECT 1 FROM sucursales.lote WHERE id_ingreso = @id)
         SET @err += '- No se puede eliminar: existen lotes asociados a este ingreso.' + CHAR(10);
 
     IF LEN(@err) > 0
@@ -541,7 +549,7 @@ BEGIN
         RETURN;
     END
 
-    DELETE FROM proveedores.ingreso WHERE id = @id;
+    DELETE FROM sucursales.ingreso WHERE id = @id;
     SELECT 'Ingreso eliminado correctamente' AS mensaje;
 END
 GO
@@ -564,7 +572,7 @@ BEGIN
     -- FKs
     IF NOT EXISTS (SELECT 1 FROM productos.producto WHERE id = @id_producto)
         SET @err += '- El producto indicado no existe.' + CHAR(10);
-    IF NOT EXISTS (SELECT 1 FROM proveedores.ingreso WHERE id = @id_ingreso)
+    IF NOT EXISTS (SELECT 1 FROM sucursales.ingreso WHERE id = @id_ingreso)
         SET @err += '- El ingreso indicado no existe.' + CHAR(10);
     -- 
     IF @fecha_ingreso IS NULL
@@ -578,7 +586,7 @@ BEGIN
         RETURN;
     END
 
-    INSERT INTO proveedores.lote (id_producto, id_ingreso, fecha_ingreso)
+    INSERT INTO sucursales.lote (id_producto, id_ingreso, fecha_vencimiento)
     VALUES (@id_producto, @id_ingreso, @fecha_ingreso);
 
     SELECT 'Lote insertado correctamente' AS mensaje;
@@ -599,13 +607,13 @@ BEGIN
     SET NOCOUNT ON;
     DECLARE @err VARCHAR(MAX) = '';
 
-    IF NOT EXISTS (SELECT 1 FROM proveedores.lote WHERE numero = @numero)
+    IF NOT EXISTS (SELECT 1 FROM sucursales.lote WHERE nro = @numero)
         SET @err += '- No existe el lote indicado.' + CHAR(10);
 
     IF NOT EXISTS (SELECT 1 FROM productos.producto WHERE id = @id_producto)
         SET @err += '- El producto indicado no existe.' + CHAR(10);
 
-    IF NOT EXISTS (SELECT 1 FROM proveedores.ingreso WHERE id = @id_ingreso)
+    IF NOT EXISTS (SELECT 1 FROM sucursales.ingreso WHERE id = @id_ingreso)
         SET @err += '- El ingreso indicado no existe.' + CHAR(10);
 
     IF @fecha_ingreso IS NULL
@@ -619,11 +627,11 @@ BEGIN
         RETURN;
     END
 
-    UPDATE proveedores.lote
+    UPDATE sucursales.lote
        SET id_producto   = @id_producto,
            id_ingreso = @id_ingreso,  
            fecha_ingreso = @fecha_ingreso
-    WHERE numero = @numero;
+    WHERE nro = @numero;
 
     SELECT 'Lote actualizado correctamente' AS mensaje;
 END
@@ -640,7 +648,7 @@ BEGIN
     SET NOCOUNT ON;
     DECLARE @err VARCHAR(MAX) = '';
 
-    IF NOT EXISTS (SELECT 1 FROM proveedores.lote WHERE numero = @numero)
+    IF NOT EXISTS (SELECT 1 FROM sucursales.lote WHERE nro = @numero)
         SET @err += '- No existe el lote indicado.' + CHAR(10);
 
     --líneas de ingreso asociadas
@@ -653,7 +661,7 @@ BEGIN
         RETURN;
     END
 
-    DELETE FROM proveedores.lote WHERE numero = @numero;
+    DELETE FROM sucursales.lote WHERE nro = @numero;
     SELECT 'Lote eliminado correctamente' AS mensaje;
 END
 GO
@@ -672,7 +680,7 @@ BEGIN
     SET NOCOUNT ON;
     DECLARE @err VARCHAR(MAX) = '';
 
-    IF NOT EXISTS (SELECT 1 FROM proveedores.lote WHERE numero = @numero_lote)
+    IF NOT EXISTS (SELECT 1 FROM sucursales.lote WHERE numero = @numero_lote)
         SET @err += '- El lote indicado no existe.' + CHAR(10);
 
     IF @cantidad IS NULL OR @cantidad <= 0
@@ -707,7 +715,7 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM proveedores.lineaIngreso WHERE numero = @numero)
         SET @err += '- No existe la línea de ingreso indicada.' + CHAR(10);
 
-    IF NOT EXISTS (SELECT 1 FROM proveedores.lote WHERE numero = @numero_lote)
+    IF NOT EXISTS (SELECT 1 FROM sucursales.lote WHERE numero = @numero_lote)
         SET @err += '- El lote indicado no existe.' + CHAR(10);
 
     IF @cantidad IS NULL OR @cantidad <= 0
@@ -1234,7 +1242,7 @@ BEGIN
         SET @err += '- No existe el producto indicado.' + CHAR(10);
 
     --lotes, líneas de venta, precios
-    IF EXISTS (SELECT 1 FROM proveedores.lote WHERE id_producto = @id)
+    IF EXISTS (SELECT 1 FROM sucursales.lote WHERE id_producto = @id)
         SET @err += '- No se puede eliminar: existen lotes asociados al producto.' + CHAR(10);
 
     IF EXISTS (SELECT 1 FROM ventas.lineaVenta WHERE id_producto = @id)
@@ -1273,9 +1281,6 @@ BEGIN
     IF @nombre IS NULL OR LTRIM(RTRIM(@nombre)) = ''
         SET @err += '- El nombre del cliente es obligatorio.' + CHAR(10);
 
-    IF @direccion IS NULL OR LTRIM(RTRIM(@direccion)) = ''
-        SET @err += '- La dirección del cliente es obligatoria.' + CHAR(10);
-
     IF @cuit_cuil IS NOT NULL AND (LEN(@cuit_cuil) <> 11 OR @cuit_cuil LIKE '%[^0-9]%')
 		SET @err += '- El CUIT/CUIL debe tener exactamente 11 dígitos (o ser NULL).' + CHAR(10);
 
@@ -1285,8 +1290,8 @@ BEGIN
         RETURN;
     END
 
-    INSERT INTO ventas.cliente (nombre, direccion, cuit_cuil)
-    VALUES (@nombre, @direccion, @cuit_cuil);
+    INSERT INTO ventas.cliente (nombre, cuit_cuil)
+    VALUES (@nombre, @cuit_cuil);
 
     SELECT 'Cliente insertado correctamente' AS mensaje;
 END
@@ -1299,7 +1304,6 @@ GO
 CREATE PROCEDURE ventas.sp_update_cliente
     @id        INT,
     @nombre    VARCHAR(50),
-    @direccion VARCHAR(100),
     @cuit_cuil CHAR(11) = NULL
 AS
 BEGIN
@@ -1311,9 +1315,6 @@ BEGIN
 
     IF @nombre IS NULL OR LTRIM(RTRIM(@nombre)) = ''
         SET @err += '- El nombre del cliente es obligatorio.' + CHAR(10);
-
-    IF @direccion IS NULL OR LTRIM(RTRIM(@direccion)) = ''
-        SET @err += '- La dirección del cliente es obligatoria.' + CHAR(10);
 	
 	IF @cuit_cuil IS NOT NULL AND (LEN(@cuit_cuil) <> 11 OR @cuit_cuil LIKE '%[^0-9]%')
 		SET @err += '- El CUIT/CUIL debe tener exactamente 11 dígitos (o ser NULL).' + CHAR(10);
@@ -1326,7 +1327,6 @@ BEGIN
 
     UPDATE ventas.cliente
        SET nombre    = @nombre,
-           direccion = @direccion,
            cuit_cuil = @cuit_cuil
     WHERE id = @id;
 
@@ -1497,8 +1497,8 @@ BEGIN
         RETURN;
     END
 
-    INSERT INTO ventas.venta (id_cliente, id_vendedor, fecha_hora, total)
-    VALUES (@id_cliente, @id_vendedor, @fecha_hora, @total);
+    INSERT INTO ventas.venta (id_cliente, id_vendedor, fecha_hora, importe_total)
+        VALUES (@id_cliente, @id_vendedor, @fecha_hora, @total);
 
     SELECT 'Venta insertada correctamente' AS mensaje;
 END
@@ -1546,7 +1546,7 @@ BEGIN
        SET id_cliente  = @id_cliente,
            id_vendedor = @id_vendedor,
            fecha_hora  = @fecha_hora,
-           total       = @total
+         importe_total = @total
     WHERE id = @id;
 
     SELECT 'Venta actualizada correctamente' AS mensaje;

@@ -179,7 +179,7 @@ EXEC proveedores.sp_insert_ingreso
     @id_proveedor=2,
     @id_sucursal=3,
     @fecha_hora=@d1;
-SELECT * FROM proveedores.ingreso;
+SELECT * FROM sucursales.ingreso;
 
 -- Caso no exitoso
 EXEC proveedores.sp_insert_ingreso 
@@ -195,7 +195,7 @@ EXEC proveedores.sp_update_ingreso
     @id_proveedor=2,
     @id_sucursal=3,
     @fecha_hora=@d2;
-SELECT * FROM proveedores.ingreso WHERE id=1;
+SELECT * FROM sucursales.ingreso WHERE id=1;
 
 -- Caso no exitoso
 EXEC proveedores.sp_update_ingreso 
@@ -207,7 +207,7 @@ EXEC proveedores.sp_update_ingreso
 ----------------------------------------------------------
 -- Caso exitoso
 EXEC proveedores.sp_delete_ingreso @id=1;
-SELECT * FROM proveedores.ingreso WHERE id=1;
+SELECT * FROM sucursales.ingreso WHERE id=1;
 
 -- Caso no exitoso
 EXEC proveedores.sp_delete_ingreso @id=1;
@@ -571,7 +571,7 @@ EXEC proveedores.sp_insert_lote
     @id_producto = 2,
     @id_ingreso = 2,
     @fecha_ingreso = '2024-01-10';
-SELECT * FROM proveedores.lote WHERE id_producto = 2 AND id_ingreso = 2;
+SELECT * FROM sucursales.lote WHERE id_producto = 2 AND id_ingreso = 2;
 
 -- Caso no exitoso 
 EXEC proveedores.sp_insert_lote 
@@ -586,7 +586,7 @@ EXEC proveedores.sp_update_lote
     @id_producto = 2,
     @id_ingreso = 2,
     @fecha_ingreso = '2024-01-15';
-SELECT * FROM proveedores.lote WHERE numero = 1;
+SELECT * FROM sucursales.lote WHERE nro = 1;
 
 -- Caso no exitoso 
 EXEC proveedores.sp_update_lote 
@@ -598,7 +598,7 @@ EXEC proveedores.sp_update_lote
 ----------------------------------------------------------
 -- Caso exitoso 
 EXEC proveedores.sp_delete_lote @numero = 1;
-SELECT * FROM proveedores.lote;
+SELECT * FROM sucursales.lote;
 
 -- Caso no exitoso
 EXEC proveedores.sp_delete_lote @numero = 999;

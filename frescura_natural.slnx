@@ -15,6 +15,13 @@
     <File Path="scripts/07_Generar_Categorias.sql" />
     <File Path="scripts/08_Generar_Productos.sql" />
     <File Path="scripts/09_Generar_Precios.sql" />
+    <File Path="scripts/0x_Cifrado.sql" />
+    <File Path="scripts/0X_SP_Operaciones_ABM.sql" />
+    <File Path="scripts/0x_Test_Cifrado.sql" />
+    <File Path="scripts/0x_Test_SP_Operaciones_ABM.sql" />
     <File Path="scripts/10_Generar_Lotes.sql" />
+    <File Path="scripts/Politica_De_Respaldo.sql" />
+    <File Path="scripts/xx_Creacion_Roles.sql" />
+    <File Path="scripts/xx_Reportes.sql" />
   </Folder>
 </Solution>
