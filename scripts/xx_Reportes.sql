@@ -77,3 +77,48 @@ select * from sucursales.ingreso where id=1;
 select * from sucursales.lote ORDER BY nro DESC;
 
 */
+
+---------------------------------------------------------
+-- Ranking de proveedores
+---------------------------------------------------------
+CREATE OR ALTER PROCEDURE proveedores.sp_top5_proveedores_por_categoria
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @desde DATE = DATEADD(MONTH, -1, CAST(GETDATE() AS date));
+
+    WITH precios_mes AS (
+        SELECT
+            pc.descripcion AS categoria,
+            pp.id_proveedor,
+            AVG(pp.mpk) AS precio_prom_mpk
+        FROM proveedores.precio pp
+        INNER JOIN productos.producto p ON p.id = pp.id_producto
+        INNER JOIN productos.categoria pc ON pc.id = p.id_categoria
+        WHERE pp.fecha >= @desde     -- SOLO ÚLTIMO MES
+          AND pp.mpk > 0
+        GROUP BY pc.descripcion, pp.id_proveedor
+    ),
+    rankeados AS (
+        SELECT
+            categoria,
+            id_proveedor,
+            precio_prom_mpk,
+            RANK() OVER (PARTITION BY categoria ORDER BY precio_prom_mpk ASC) AS rn
+        FROM precios_mes
+    )
+    SELECT
+        r.categoria,
+        pr.id AS id_proveedor,
+        pr.nombre AS proveedor,
+        pr.pais,
+        CAST(r.precio_prom_mpk AS DECIMAL(12,4)) AS precio_promedio_mpk
+    FROM rankeados r
+    INNER JOIN proveedores.proveedor pr ON pr.id = r.id_proveedor
+    WHERE r.rn <= 5
+    ORDER BY r.categoria, r.rn;
+END
+GO
+
+EXEC proveedores.sp_top5_proveedores_por_categoria;
