@@ -8,19 +8,16 @@ Integrantes:
 - Mamani Estrada Lucas Gabriel			
 ------------------------------------------------------------
 */
-----
+---- CIFRADO DE DATOS SENSIBLES
 
 USE FrescuraNatural;
-GO
-
-CREATE SCHEMA seguridad;
 GO
 
 ---------------------------------------------------------
 -- SP para agregar columnas para cifrado
 ---------------------------------------------------------
 
-CREATE OR ALTER PROCEDURE seguridad.agregar_columnsa_para_cifrado
+CREATE OR ALTER PROCEDURE seguridad.agregar_columna_para_cifrado
 AS
 BEGIN
 	SET NOCOUNT ON;
@@ -43,7 +40,7 @@ BEGIN
 END;
 GO
 
-EXEC seguridad.agregar_columnsa_para_cifrado;
+EXEC seguridad.agregar_columna_para_cifrado;
 GO
 
 
@@ -100,24 +97,30 @@ BEGIN
 
 	-- Validar que todos los registros tengan su cifrado
 	-- cliente
-	IF EXISTS (SELECT 1 FROM ventas.cliente WHERE (nombre IS NOT NULL AND nombre_Cif IS NULL))
-		SET @err += '- Hay nombres de clientes sin cifrar.' + CHAR(10);
+	IF EXISTS (SELECT 1 FROM ventas.cliente 
+		WHERE (nombre IS NOT NULL AND nombre_Cif IS NULL))
+			SET @err += '- Hay nombres de clientes sin cifrar.' + CHAR(10);
 
-	IF EXISTS (SELECT 1 FROM ventas.cliente WHERE (direccion IS NOT NULL AND direccion_Cif IS NULL))
-		SET @err += '- Hay direcciones de clientes sin cifrar.' + CHAR(10);
+	IF EXISTS (SELECT 1 FROM ventas.cliente 
+		WHERE (direccion IS NOT NULL AND direccion_Cif IS NULL))
+			SET @err += '- Hay direcciones de clientes sin cifrar.' + CHAR(10);
 
-	IF EXISTS (SELECT 1 FROM ventas.cliente WHERE (cuit_cuil IS NOT NULL AND cuit_cuil_Cif IS NULL))
-		SET @err += '- Hay cuit_cuil de clientes sin cifrar.' + CHAR(10);
+	IF EXISTS (SELECT 1 FROM ventas.cliente 
+		WHERE (cuit_cuil IS NOT NULL AND cuit_cuil_Cif IS NULL))
+			SET @err += '- Hay cuit_cuil de clientes sin cifrar.' + CHAR(10);
 
     -- capacitador
-	IF EXISTS (SELECT 1 FROM sucursales.capacitador WHERE (numero_registro IS NOT NULL AND numero_registro_Cif IS NULL))
-		SET @err += '- Hay numeros de registros de capacitadores sin cifrar.' + CHAR(10);
+	IF EXISTS (SELECT 1 FROM sucursales.capacitador 
+		WHERE (numero_registro IS NOT NULL AND numero_registro_Cif IS NULL))
+			SET @err += '- Hay numeros de registros de capacitadores sin cifrar.' + CHAR(10);
 
-	IF EXISTS (SELECT 1 FROM sucursales.capacitador WHERE (telefono IS NOT NULL AND telefono_Cif IS NULL))
-        SET @err += '- Hay telefonos de capacitadores sin cifrar.' + CHAR(10);
+	IF EXISTS (SELECT 1 FROM sucursales.capacitador 
+		WHERE (telefono IS NOT NULL AND telefono_Cif IS NULL))
+			SET @err += '- Hay telefonos de capacitadores sin cifrar.' + CHAR(10);
 
-	IF EXISTS (SELECT 1 FROM sucursales.capacitador WHERE (mail IS NOT NULL AND mail_Cif IS NULL))
-        SET @err += '- Hay mails de capacitadores sin cifrar.' + CHAR(10);
+	IF EXISTS (SELECT 1 FROM sucursales.capacitador 
+		WHERE (mail IS NOT NULL AND mail_Cif IS NULL))
+			SET @err += '- Hay mails de capacitadores sin cifrar.' + CHAR(10);
 	
 	IF LEN(@err) > 0
 	BEGIN 
@@ -197,27 +200,3 @@ BEGIN
     FROM sucursales.capacitador;
 END;
 GO
-
-EXEC seguridad.descifrar_clientes N'ClaveSecreta2026$';
-EXEC seguridad.descifrar_capacitadores N'ClaveSecreta2026$';
-GO
-
-
-/*
-SELECT * FROM ventas.cliente;
-SELECT * FROM sucursales.capacitador;
-
-EXEC sucursales.sp_insert_capacitador 
-    @numero_registro='REG100',
-    @nombre='Cap Uno',
-    @telefono=NULL,
-    @mail='cap1@mail.com';
-SELECT * FROM sucursales.capacitador;
-
-EXEC ventas.sp_insert_cliente 
-    @nombre='Juan',
-    @direccion='Dir 1',
-    @cuit_cuil='20345678901';
-SELECT * FROM ventas.cliente;
-*/
-
