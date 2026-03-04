@@ -441,10 +441,10 @@ GO
 ----------------------------------------------------------
 -- INGRESO
 ----------------------------------------------------------
-IF OBJECT_ID('proveedores.sp_insert_ingreso') IS NOT NULL
-    DROP PROCEDURE proveedores.sp_insert_ingreso;
+IF OBJECT_ID('sucursales.sp_insert_ingreso') IS NOT NULL
+    DROP PROCEDURE sucursales.sp_insert_ingreso;
 GO
-CREATE PROCEDURE proveedores.sp_insert_ingreso
+CREATE PROCEDURE sucursales.sp_insert_ingreso
     @id_proveedor INT,
     @id_sucursal  INT,
     @fecha_hora   DATETIME,
@@ -463,7 +463,7 @@ BEGIN
     IF @fecha_hora IS NULL
         SET @err += '- La fecha y hora del ingreso es obligatoria.' + CHAR(10);
     IF @importe <= 0
-        SET @err += '- El importe ingresado es negativo. Ingrese un valor positivo.' + CHAR(10);
+        SET @err += '- El importe no puede ser negativo' + CHAR(10);
 
     IF LEN(@err) > 0
     BEGIN
@@ -479,10 +479,10 @@ END
 GO
 
 
-IF OBJECT_ID('proveedores.sp_update_ingreso') IS NOT NULL
-    DROP PROCEDURE proveedores.sp_update_ingreso;
+IF OBJECT_ID('sucursales.sp_update_ingreso') IS NOT NULL
+    DROP PROCEDURE sucursales.sp_update_ingreso;
 GO
-CREATE PROCEDURE proveedores.sp_update_ingreso
+CREATE PROCEDURE sucursales.sp_update_ingreso
     @id           INT,
     @id_proveedor INT,
     @id_sucursal  INT,
@@ -503,7 +503,7 @@ BEGIN
         SET @err += '- La sucursal indicada no existe.' + CHAR(10);
 
     IF @importe <= 0
-        SET @err += '- El importe ingresado es negativo. Ingrese un valor positivo.' + CHAR(10);
+        SET @err += '- El importe no puede ser negativo.' + CHAR(10);
 
     IF @fecha_hora IS NULL
         SET @err += '- La fecha y hora del ingreso es obligatoria.' + CHAR(10);
@@ -526,10 +526,10 @@ END
 GO
 
 
-IF OBJECT_ID('proveedores.sp_delete_ingreso') IS NOT NULL
-    DROP PROCEDURE proveedores.sp_delete_ingreso;
+IF OBJECT_ID('sucursales.sp_delete_ingreso') IS NOT NULL
+    DROP PROCEDURE sucursales.sp_delete_ingreso;
 GO
-CREATE PROCEDURE proveedores.sp_delete_ingreso
+CREATE PROCEDURE sucursales.sp_delete_ingreso
     @id INT
 AS
 BEGIN
@@ -557,13 +557,16 @@ GO
 ----------------------------------------------------------
 -- LOTE
 ----------------------------------------------------------
-IF OBJECT_ID('proveedores.sp_insert_lote') IS NOT NULL
-    DROP PROCEDURE proveedores.sp_insert_lote;
+IF OBJECT_ID('sucursales.sp_insert_lote') IS NOT NULL
+    DROP PROCEDURE sucursales.sp_insert_lote;
 GO
-CREATE PROCEDURE proveedores.sp_insert_lote
+CREATE PROCEDURE sucursales.sp_insert_lote
     @id_producto   INT,
     @id_ingreso    INT,
-    @fecha_ingreso DATE
+	@monto             DECIMAL(10,2) = NULL,
+    @fecha_vencimiento DATETIME = NULL,
+    @cantidad          SMALLINT,
+    @peso_total        DECIMAL(6,3) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -575,10 +578,12 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM sucursales.ingreso WHERE id = @id_ingreso)
         SET @err += '- El ingreso indicado no existe.' + CHAR(10);
     -- 
-    IF @fecha_ingreso IS NULL
-        SET @err += '- La fecha de ingreso es obligatoria.' + CHAR(10);
-    ELSE IF @fecha_ingreso > CAST(GETDATE() AS DATE)
-        SET @err += '- La fecha de ingreso no puede ser futura.' + CHAR(10);
+	IF @cantidad IS NULL OR @cantidad <= 0
+        SET @err += N'- La cantidad debe ser mayor a 0.' + CHAR(10);
+    IF @monto IS NOT NULL AND @monto < 0
+        SET @err += N'- El monto no puede ser negativo.' + CHAR(10);
+    IF @peso_total IS NOT NULL AND @peso_total < 0
+        SET @err += N'- El peso_total no puede ser negativo.' + CHAR(10);
 
     IF LEN(@err) > 0
     BEGIN
@@ -586,28 +591,31 @@ BEGIN
         RETURN;
     END
 
-    INSERT INTO sucursales.lote (id_producto, id_ingreso, fecha_vencimiento)
-    VALUES (@id_producto, @id_ingreso, @fecha_ingreso);
+    INSERT INTO sucursales.lote (id_producto, id_ingreso, monto, fecha_vencimiento, cantidad, peso_total)
+    VALUES (@id_producto, @id_ingreso, @monto, @fecha_vencimiento, @cantidad, @peso_total);
 
     SELECT 'Lote insertado correctamente' AS mensaje;
 END
 GO
 
 
-IF OBJECT_ID('proveedores.sp_update_lote') IS NOT NULL
-    DROP PROCEDURE proveedores.sp_update_lote;
+IF OBJECT_ID('sucursales.sp_update_lote') IS NOT NULL
+    DROP PROCEDURE sucursales.sp_update_lote;
 GO
-CREATE PROCEDURE proveedores.sp_update_lote
-    @numero        INT,
+CREATE PROCEDURE sucursales.sp_update_lote
+    @nro        INT,
     @id_producto   INT,
-    @id_ingreso    INT,  
-    @fecha_ingreso DATE
+    @id_ingreso	   INT,  
+    @monto             DECIMAL(10,2) = NULL,
+    @fecha_vencimiento DATETIME = NULL,
+    @cantidad          SMALLINT,
+    @peso_total        DECIMAL(6,3) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
     DECLARE @err VARCHAR(MAX) = '';
 
-    IF NOT EXISTS (SELECT 1 FROM sucursales.lote WHERE nro = @numero)
+    IF NOT EXISTS (SELECT 1 FROM sucursales.lote WHERE nro = @nro)
         SET @err += '- No existe el lote indicado.' + CHAR(10);
 
     IF NOT EXISTS (SELECT 1 FROM productos.producto WHERE id = @id_producto)
@@ -616,10 +624,12 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM sucursales.ingreso WHERE id = @id_ingreso)
         SET @err += '- El ingreso indicado no existe.' + CHAR(10);
 
-    IF @fecha_ingreso IS NULL
-        SET @err += '- La fecha de ingreso es obligatoria.' + CHAR(10);
-    ELSE IF @fecha_ingreso > CAST(GETDATE() AS DATE)
-        SET @err += '- La fecha de ingreso no puede ser futura.' + CHAR(10);
+    IF @cantidad IS NULL OR @cantidad <= 0
+        SET @err += N'- La cantidad debe ser mayor a 0.' + CHAR(10);
+    IF @monto IS NOT NULL AND @monto < 0
+        SET @err += N'- El monto no puede ser negativo.' + CHAR(10);
+    IF @peso_total IS NOT NULL AND @peso_total < 0
+        SET @err += N'- El peso_total no puede ser negativo.' + CHAR(10);
 
     IF LEN(@err) > 0
     BEGIN
@@ -630,134 +640,37 @@ BEGIN
     UPDATE sucursales.lote
        SET id_producto   = @id_producto,
            id_ingreso = @id_ingreso,  
-           fecha_ingreso = @fecha_ingreso
-    WHERE nro = @numero;
+           fecha_vencimiento = @fecha_vencimiento,
+		   cantidad = @cantidad,
+		   peso_total = @peso_total
+    WHERE nro = @nro;
 
     SELECT 'Lote actualizado correctamente' AS mensaje;
 END
 GO
 
 
-IF OBJECT_ID('proveedores.sp_delete_lote') IS NOT NULL
-    DROP PROCEDURE proveedores.sp_delete_lote;
+IF OBJECT_ID('sucursales.sp_delete_lote') IS NOT NULL
+    DROP PROCEDURE sucursales.sp_delete_lote;
 GO
-CREATE PROCEDURE proveedores.sp_delete_lote
-    @numero INT
+CREATE PROCEDURE sucursales.sp_delete_lote
+    @nro INT
 AS
 BEGIN
     SET NOCOUNT ON;
     DECLARE @err VARCHAR(MAX) = '';
 
-    IF NOT EXISTS (SELECT 1 FROM sucursales.lote WHERE nro = @numero)
+    IF NOT EXISTS (SELECT 1 FROM sucursales.lote WHERE nro = @nro)
         SET @err += '- No existe el lote indicado.' + CHAR(10);
 
-    --líneas de ingreso asociadas
-    IF EXISTS (SELECT 1 FROM proveedores.lineaIngreso WHERE numero_lote = @numero)
-        SET @err += '- No se puede eliminar: existen líneas de ingreso asociadas al lote.' + CHAR(10);
-
     IF LEN(@err) > 0
     BEGIN
         RAISERROR(@err, 16, 1);
         RETURN;
     END
 
-    DELETE FROM sucursales.lote WHERE nro = @numero;
+    DELETE FROM sucursales.lote WHERE nro = @nro;
     SELECT 'Lote eliminado correctamente' AS mensaje;
-END
-GO
-
-----------------------------------------------------------
--- LINEA INGRESO
-----------------------------------------------------------
-IF OBJECT_ID('proveedores.sp_insert_lineaIngreso') IS NOT NULL
-    DROP PROCEDURE proveedores.sp_insert_lineaIngreso;
-GO
-CREATE PROCEDURE proveedores.sp_insert_lineaIngreso
-    @numero_lote INT,
-    @cantidad    SMALLINT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    DECLARE @err VARCHAR(MAX) = '';
-
-    IF NOT EXISTS (SELECT 1 FROM sucursales.lote WHERE numero = @numero_lote)
-        SET @err += '- El lote indicado no existe.' + CHAR(10);
-
-    IF @cantidad IS NULL OR @cantidad <= 0
-        SET @err += '- La cantidad debe ser mayor a 0.' + CHAR(10);
-
-    IF LEN(@err) > 0
-    BEGIN
-        RAISERROR(@err, 16, 1);
-        RETURN;
-    END
-
-    INSERT INTO proveedores.lineaIngreso (numero_lote, cantidad)
-    VALUES (@numero_lote, @cantidad);
-
-    SELECT 'Línea de ingreso insertada correctamente' AS mensaje;
-END
-GO
-
-
-IF OBJECT_ID('proveedores.sp_update_lineaIngreso') IS NOT NULL
-    DROP PROCEDURE proveedores.sp_update_lineaIngreso;
-GO
-CREATE PROCEDURE proveedores.sp_update_lineaIngreso
-    @numero      INT,
-    @numero_lote INT,
-    @cantidad    SMALLINT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    DECLARE @err VARCHAR(MAX) = '';
-
-    IF NOT EXISTS (SELECT 1 FROM proveedores.lineaIngreso WHERE numero = @numero)
-        SET @err += '- No existe la línea de ingreso indicada.' + CHAR(10);
-
-    IF NOT EXISTS (SELECT 1 FROM sucursales.lote WHERE numero = @numero_lote)
-        SET @err += '- El lote indicado no existe.' + CHAR(10);
-
-    IF @cantidad IS NULL OR @cantidad <= 0
-        SET @err += '- La cantidad debe ser mayor a 0.' + CHAR(10);
-
-    IF LEN(@err) > 0
-    BEGIN
-        RAISERROR(@err, 16, 1);
-        RETURN;
-    END
-
-    UPDATE proveedores.lineaIngreso
-       SET numero_lote = @numero_lote,
-           cantidad    = @cantidad
-    WHERE numero = @numero;
-
-    SELECT 'Línea de ingreso actualizada correctamente' AS mensaje;
-END
-GO
-
-
-IF OBJECT_ID('proveedores.sp_delete_lineaIngreso') IS NOT NULL
-    DROP PROCEDURE proveedores.sp_delete_lineaIngreso;
-GO
-CREATE PROCEDURE proveedores.sp_delete_lineaIngreso
-    @numero INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    DECLARE @err VARCHAR(MAX) = '';
-
-    IF NOT EXISTS (SELECT 1 FROM proveedores.lineaIngreso WHERE numero = @numero)
-        SET @err += '- No existe la línea de ingreso indicada.' + CHAR(10);
-
-    IF LEN(@err) > 0
-    BEGIN
-        RAISERROR(@err, 16, 1);
-        RETURN;
-    END
-
-    DELETE FROM proveedores.lineaIngreso WHERE numero = @numero;
-    SELECT 'Línea de ingreso eliminada correctamente' AS mensaje;
 END
 GO
 
@@ -1111,6 +1024,7 @@ IF OBJECT_ID('productos.sp_insert_producto') IS NOT NULL
 GO
 CREATE PROCEDURE productos.sp_insert_producto
     @id_categoria INT,
+	@orden_pop    TINYINT,
     @especie      VARCHAR(50),
     @variedad     VARCHAR(50) = NULL,
     @procedencia  VARCHAR(50) = NULL,
@@ -1118,7 +1032,9 @@ CREATE PROCEDURE productos.sp_insert_producto
     @calidad      CHAR(2)     = NULL,
     @grado        CHAR(3)     = NULL,
     @tamaño       VARCHAR(12) = NULL,   
-    @peso         SMALLINT    = NULL
+    @peso         SMALLINT    = NULL,
+	@cantidad     SMALLINT = NULL,
+    @precioXKg    DECIMAL(7,2)
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -1152,9 +1068,9 @@ BEGIN
     END
 
     INSERT INTO productos.producto (
-        id_categoria, especie, variedad, procedencia, envase, calidad, grado, tamaño, peso
+        id_categoria, orden_pop, especie, variedad, procedencia, envase, calidad, grado, tamaño, peso, cantidad, precioXKg
     ) VALUES (
-        @id_categoria, @especie, @variedad, @procedencia, @envase, @calidad, @grado, @tamaño, @peso
+        @id_categoria, @orden_pop, @especie, @variedad, @procedencia, @envase, @calidad, @grado, @tamaño, @peso, @cantidad, @precioXKg
     );
 
     SELECT 'Producto insertado correctamente' AS mensaje;
@@ -1168,14 +1084,17 @@ GO
 CREATE PROCEDURE productos.sp_update_producto
     @id           INT,
     @id_categoria INT,
+    @orden_pop    TINYINT,
     @especie      VARCHAR(50),
     @variedad     VARCHAR(50) = NULL,
     @procedencia  VARCHAR(50) = NULL,
-    @envase       CHAR(2)     = NULL,
-    @calidad      CHAR(2)     = NULL,
-    @grado        CHAR(3)     = NULL,
+    @envase       CHAR(2) = NULL,
+    @calidad      CHAR(2) = NULL,
+    @grado        CHAR(3) = NULL,
     @tamaño       VARCHAR(12) = NULL,
-    @peso         SMALLINT    = NULL
+    @peso         DECIMAL(6,3) = NULL,
+    @cantidad     SMALLINT = NULL,
+    @precioXKg    DECIMAL(7,2)
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -1212,15 +1131,18 @@ BEGIN
     END
 
     UPDATE productos.producto
-       SET id_categoria = @id_categoria,
-           especie      = @especie,
-           variedad     = @variedad,
-           procedencia  = @procedencia,
-           envase       = @envase,
-           calidad      = @calidad,
-           grado        = @grado,
-           tamaño       = @tamaño,
-           peso         = @peso
+		SET id_categoria = @id_categoria,
+			orden_pop    = @orden_pop,
+			especie      = @especie,
+			variedad     = @variedad,
+			procedencia  = @procedencia,
+			envase       = @envase,
+			calidad      = @calidad,
+			grado        = @grado,
+			tamaño       = @tamaño,
+			peso         = @peso,
+			cantidad     = @cantidad,
+			precioXKg    = @precioXKg
     WHERE id = @id;
 
     SELECT 'Producto actualizado correctamente' AS mensaje;
@@ -1271,8 +1193,7 @@ IF OBJECT_ID('ventas.sp_insert_cliente') IS NOT NULL
 GO
 CREATE PROCEDURE ventas.sp_insert_cliente
     @nombre    VARCHAR(50),
-    @direccion VARCHAR(100),
-    @cuit_cuil CHAR(11) = NULL
+    @cuit_cuil CHAR(13) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -1281,8 +1202,8 @@ BEGIN
     IF @nombre IS NULL OR LTRIM(RTRIM(@nombre)) = ''
         SET @err += '- El nombre del cliente es obligatorio.' + CHAR(10);
 
-    IF @cuit_cuil IS NOT NULL AND (LEN(@cuit_cuil) <> 11 OR @cuit_cuil LIKE '%[^0-9]%')
-		SET @err += '- El CUIT/CUIL debe tener exactamente 11 dígitos (o ser NULL).' + CHAR(10);
+    IF @cuit_cuil IS NOT NULL AND (LEN(@cuit_cuil) <> 13)
+		SET @err += '- El CUIT/CUIL debe tener exactamente 13 dígitos (o ser NULL).' + CHAR(10);
 
     IF LEN(@err) > 0
     BEGIN
@@ -1302,9 +1223,9 @@ IF OBJECT_ID('ventas.sp_update_cliente') IS NOT NULL
     DROP PROCEDURE ventas.sp_update_cliente;
 GO
 CREATE PROCEDURE ventas.sp_update_cliente
-    @id        INT,
+     @id        INT,
     @nombre    VARCHAR(50),
-    @cuit_cuil CHAR(11) = NULL
+    @cuit_cuil CHAR(13) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -1316,8 +1237,8 @@ BEGIN
     IF @nombre IS NULL OR LTRIM(RTRIM(@nombre)) = ''
         SET @err += '- El nombre del cliente es obligatorio.' + CHAR(10);
 	
-	IF @cuit_cuil IS NOT NULL AND (LEN(@cuit_cuil) <> 11 OR @cuit_cuil LIKE '%[^0-9]%')
-		SET @err += '- El CUIT/CUIL debe tener exactamente 11 dígitos (o ser NULL).' + CHAR(10);
+	IF @cuit_cuil IS NOT NULL AND (LEN(@cuit_cuil) <> 13 )
+		SET @err += '- El CUIT/CUIL debe tener exactamente 13 dígitos (o ser NULL).' + CHAR(10);
 
     IF LEN(@err) > 0
     BEGIN
@@ -1591,7 +1512,9 @@ GO
 CREATE PROCEDURE ventas.sp_insert_lineaVenta
     @id_venta   INT,
     @id_producto INT,
-    @cantidad   SMALLINT
+    @cantidad   INT,
+    @peso       DECIMAL(6,3) = NULL,
+    @subtotal   DECIMAL(8,2) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -1613,8 +1536,8 @@ BEGIN
         RETURN;
     END
 
-    INSERT INTO ventas.lineaVenta (id_venta, id_producto, cantidad)
-    VALUES (@id_venta, @id_producto, @cantidad);
+    INSERT INTO ventas.lineaVenta (id_venta, id_producto, cantidad, peso, subtotal)
+    VALUES (@id_venta, @id_producto, @cantidad, @peso, @subtotal);
 
     SELECT 'Línea de venta insertada correctamente' AS mensaje;
 END
@@ -1628,7 +1551,9 @@ CREATE PROCEDURE ventas.sp_update_lineaVenta
     @id          INT,
     @id_venta    INT,
     @id_producto INT,
-    @cantidad    SMALLINT
+    @cantidad   INT,
+    @peso       DECIMAL(6,3) = NULL,
+    @subtotal   DECIMAL(8,2) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -1655,7 +1580,9 @@ BEGIN
     UPDATE ventas.lineaVenta
        SET id_venta    = @id_venta,
            id_producto = @id_producto,
-           cantidad    = @cantidad
+           cantidad    = @cantidad,
+		   peso      = @peso,
+		   subtotal  = @subtotal
     WHERE id = @id;
 
     SELECT 'Línea de venta actualizada correctamente' AS mensaje;
