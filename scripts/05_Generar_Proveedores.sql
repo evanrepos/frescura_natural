@@ -4,10 +4,6 @@ GO
 SELECT TOP 20 * FROM proveedores.proveedor
 GO
 
-DELETE FROM proveedores.proveedor
-DBCC CHECKIDENT('proveedores.proveedor', RESEED, 0)
-GO
-
 CREATE OR ALTER FUNCTION json_to_function (@json NVARCHAR(MAX), @tag VARCHAR(MAX))
 RETURNS TABLE
 AS
@@ -85,7 +81,7 @@ BEGIN
 END
 GO
 
-EXEC proveedores.sp_generar_proveedores 'E:\frescura_natural\fuente\05.nombres\data.json', 50
+EXEC proveedores.sp_generar_proveedores 'E:\frescura_natural\fuente\05.nombres\data.json', 100
 GO
 
 SELECT * FROM proveedores.proveedor

@@ -4,6 +4,7 @@ GO
 CREATE OR ALTER PROCEDURE productos.sp_generar_temporada
 AS
 BEGIN
+	SET NOCOUNT ON
 	DELETE FROM productos.temporada
 	DBCC CHECKIDENT ('productos.temporada', RESEED, 0)
 
@@ -20,6 +21,7 @@ CREATE OR ALTER PROCEDURE productos.sp_generar_categorias
 AS
 	DECLARE @id_temporada INT;
 BEGIN
+	SET NOCOUNT ON
 	DELETE FROM productos.categoria
 	DBCC CHECKIDENT ('productos.categoria', RESEED, 0)
 

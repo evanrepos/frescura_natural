@@ -1,14 +1,9 @@
 USE FrescuraNatural
 GO
 
-DELETE FROM proveedores.precio
-DBCC CHECKIDENT ('proveedores.precio', RESEED, 0);
-GO
-
 CREATE OR ALTER PROCEDURE proveedores.sp_generar_precios
 AS
 	DECLARE @id_mercado_central INT = (SELECT id FROM proveedores.proveedor WHERE nombre = 'Mercado Central');
-	DECLARE @randomQTY INT = CAST(RAND() * 10 AS INT);
 	DECLARE @loop INT;
 	DECLARE @id_producto INT;
 	DECLARE @cant_prods INT;
@@ -29,9 +24,8 @@ BEGIN
 
 	--PASO 0. Inicializar precios del proveedor mercado central.
 	INSERT INTO proveedores.precio (id_producto, id_proveedor, monto, mpk)
-		SELECT TOP (@randomQTY) id, @id_mercado_central, modal, mopk FROM datos.precios 
-		WHERE procedencia = 'Mercado Central'
-		
+		SELECT id, @id_mercado_central, modal, mopk FROM datos.precios 
+		WHERE procedencia = 'Mercado Central' AND modal <> 0 AND mopk <> 0
 
 	--POR CADA PROVEEDOR
 	SET @loop = 1;
@@ -49,8 +43,8 @@ BEGIN
 		SET @bit_decision = CAST(RAND(CHECKSUM(NEWID())) * 2 AS TINYINT);
 
 		--PASO 3. Elegir una cantidad ALEATORIA de PRODUCTOS para el proveedor, cuya procedencia coincida con su país. Los precios no pueden ser nulos.
-		SELECT @cant_prods = CAST(RAND(CHECKSUM(NEWID())) * COUNT(1) AS INT) + 1 FROM datos.precios WHERE procedencia = @pais AND modal > 0 AND mopk > 0;
-		
+		SELECT @cant_prods = CAST(RAND() * COUNT(1) AS INT) + 1 FROM datos.precios WHERE procedencia = @pais AND modal <> 0 AND mopk <> 0;
+
 		--PASO 4. Insertar el id de producto, máximo, mínimo, modal, mapk, mipk y mopk en una tabla temporal
 		INSERT INTO @prods_random (id, maximo, minimo, modal, mapk, mipk, mopk)
 			SELECT TOP (@cant_prods) id, maximo, minimo, 
@@ -60,7 +54,7 @@ BEGIN
 			FROM datos.precios
 			WHERE modal > 0 AND mopk > 0 AND procedencia = @pais 
 			ORDER BY NEWID();
-		
+
 		--PASO 5. Insertar el PRODUCTO, PROVEEDOR y MONTOs en la tabla de precios.
 		INSERT INTO proveedores.precio (id_producto, id_proveedor, monto, mpk)
 			SELECT id, @loop, modal, mopk FROM @prods_random
@@ -75,7 +69,7 @@ GO
 SELECT * FROM proveedores.precio
 ORDER BY id_producto, mpk
 
-SELECT id_producto, especie, procedencia, id_proveedor, nombre, pais, 
+SELECT TOP 50 id_producto, especie, procedencia, id_proveedor, nombre, pais, 
 	minimo, monto, modal, CAST(CAST((monto - modal) * 100 AS FLOAT) / CAST(modal AS FLOAT) AS DECIMAL(4, 2)) AS 'diferencia (%)', maximo
 FROM proveedores.precio pprecio INNER JOIN 
 		datos.precios dprecio ON pprecio.id_producto = dprecio.id INNER JOIN 

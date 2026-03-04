@@ -3,4 +3,18 @@
     <BuildType Name="Default" />
     <Platform Name="Default" />
   </Configurations>
+  <Folder Name="/Elementos de la solución/">
+    <File Path="11_Generar_Ventas.sql" />
+    <File Path="scripts/00_Creacion_DB.sql" />
+    <File Path="scripts/01_Importar_Mermas.sql" />
+    <File Path="scripts/02_Importar_Estimaciones.sql" />
+    <File Path="scripts/03_Importar_Capacitadores.sql" />
+    <File Path="scripts/04_Importar_Precios.sql" />
+    <File Path="scripts/05_Generar_Proveedores.sql" />
+    <File Path="scripts/06_Generar_Sucursales.sql" />
+    <File Path="scripts/07_Generar_Categorias.sql" />
+    <File Path="scripts/08_Generar_Productos.sql" />
+    <File Path="scripts/09_Generar_Precios.sql" />
+    <File Path="scripts/10_Generar_Lotes.sql" />
+  </Folder>
 </Solution>

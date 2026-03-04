@@ -92,6 +92,12 @@ GO
 -- ESQUEMA: productos (categoria, temporada, producto)
 ----------------------------------------------------------------
 
+CREATE TABLE productos.categoria (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    descripcion VARCHAR(50) NOT NULL
+);
+
+
 CREATE TABLE productos.temporada (
     id INT IDENTITY(1,1) PRIMARY KEY,
     descripcion VARCHAR(50) NOT NULL,
@@ -99,18 +105,8 @@ CREATE TABLE productos.temporada (
     dia_desde TINYINT,
 );
 
-CREATE TABLE productos.categoria (
-    id INT IDENTITY(1,1) PRIMARY KEY,
-    id_temporada INT NOT NULL,
-    descripcion VARCHAR(50) NOT NULL,
-    dias_caducidad TINYINT,
-    margen TINYINT,
-    CONSTRAINT FK_temporada FOREIGN KEY (id_temporada) REFERENCES productos.temporada(id)
-);
-
 CREATE TABLE productos.producto (
     id INT IDENTITY(1,1) PRIMARY KEY,
-    id_categoria INT NOT NULL,
     especie VARCHAR(50) NOT NULL,
     variedad VARCHAR(50),
     procedencia VARCHAR(50),
@@ -119,7 +115,6 @@ CREATE TABLE productos.producto (
 	grado CHAR(3),
 	tamaño VARCHAR(12),
     peso SMALLINT,
-    CONSTRAINT FK_categoria FOREIGN KEY (id_categoria) REFERENCES productos.categoria(id),
     CONSTRAINT UQ_producto UNIQUE (especie, variedad, procedencia, envase, peso, calidad, tamaño, grado)
 );
 GO

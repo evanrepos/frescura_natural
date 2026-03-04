@@ -11,10 +11,13 @@ CREATE OR ALTER PROCEDURE productos.sp_agregar_productos
 AS
 	DECLARE @id_categoria INT;
 BEGIN
+	SET NOCOUNT ON
 	SELECT @id_categoria = (SELECT id FROM productos.categoria WHERE descripcion = 'Otros');
-	INSERT INTO productos.producto (id_categoria, orden_pop, especie, variedad, procedencia, envase, calidad, grado, tamaño, peso, precioXKg)
-		SELECT @id_categoria, 6, especie, variedad, procedencia, envase, calidad, grado, tamaño, peso, mopk FROM datos.precios
-		WHERE id NOT IN (SELECT id FROM productos.producto)
+	INSERT INTO productos.producto (id_categoria, orden_pop, especie, variedad, procedencia, envase, calidad, grado, tamaño, peso, cantidad, precioXKg)
+		SELECT @id_categoria, 6, especie, variedad, procedencia, envase, calidad, grado, tamaño, peso, CAST(modal / mopk AS INT), mopk FROM datos.precios
+		WHERE id NOT IN (SELECT id FROM productos.producto) AND modal <> 0 AND mopk <> 0
+
+	UPDATE productos.producto SET cantidad = 0 WHERE peso <> 0;
 END
 GO
 
